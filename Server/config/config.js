@@ -19,5 +19,10 @@ module.exports = {
       "port": "5432",
       "dialect": "postgres"
    }
+  },
+  mail:{
+    mailService: 'gmail',
+    user:'zhang277fall17@gmail.com',
+    password: 'zhang27717'
   }
 }
