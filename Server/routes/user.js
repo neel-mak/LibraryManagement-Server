@@ -37,7 +37,7 @@ router.post('/register', (req, res) => {
            winston.info("user already exists",user.email);
            return res.json({
             success: false,
-            message: 'User with this email aleady exists!'
+            message: 'User with this email already exists!'
         });
         }
         else{
