@@ -37,7 +37,7 @@ let verify = (code,email,cb) => {
             winston.info("code matches");
             user.isVerified = true;
             user.save();
-            cb.success();
+            cb.success(user);
         }
         else{
             winston.info("code does not match");

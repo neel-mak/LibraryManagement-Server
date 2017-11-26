@@ -1,4 +1,6 @@
 
+
+
 const express = require('express');
 
 const router = express.Router();
@@ -11,6 +13,7 @@ const config = require('../config/config');
 const sendVerificationCode = require('../utils/user').sendVerificationCode;
 const verify = require('../utils/user').verify;
 const utils = require('../utils/util');
+const mailer = require('../utils/email');
 
 
 router.post('/register', (req, res) => {
@@ -80,7 +83,12 @@ router.post('/verify', (req,res)=>{
     }
 
     verify(req.body.verificationCode,req.body.email,{
-        success: () => {  
+        success: (user) => {  
+            mailer.sendMail(user,{
+                "subject":"Account verified!",
+                "text":"Hi!\nYour account is verified! You can now start using your account!"
+            });
+            
             res.json({
                 success: true,
                 message: 'User verified!'
