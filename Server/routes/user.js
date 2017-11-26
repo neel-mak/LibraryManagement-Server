@@ -9,10 +9,11 @@ const winston = require('winston');
 const crypto = require('crypto');
 const config = require('../config/config');
 const sendVerificationCode = require('../utils/user').sendVerificationCode;
+const verify = require('../utils/user').verify;
 const utils = require('../utils/util');
 
 
-router.post('/register', function(req, res) {
+router.post('/register', (req, res) => {
 
     if (!req.body.email || !req.body.password || !req.body.universityId) {
         winston.info("Email/password/universityId not present");
@@ -34,6 +35,10 @@ router.post('/register', function(req, res) {
     then((user) => {
         if(user){
            winston.info("user already exists",user.email);
+           return res.json({
+            success: false,
+            message: 'User with this email aleady exists!'
+        });
         }
         else{
             winston.info("User does not exist..");
@@ -64,6 +69,33 @@ router.post('/register', function(req, res) {
 
 
 });
+
+
+router.post('/verify', (req,res)=>{
+    if(!!!req.body.email || !!!req.body.verificationCode){
+        return res.json({
+            success: false,
+            message: 'Please enter verification code'
+        });
+    }
+
+    verify(req.body.verificationCode,req.body.email,{
+        success: () => {  
+            res.json({
+                success: true,
+                message: 'User verified!'
+            });
+        },
+        failure: () => {
+            res.json({
+                success: false,
+                message: 'User verification failed!'
+            });
+        }
+    })
+    
+    
+})
 
 
 

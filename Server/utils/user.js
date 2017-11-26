@@ -27,4 +27,26 @@ let sendVerificationCode = (code,email) => {
     });
 }
 
+let verify = (code,email,cb) => {
+
+    User.findOne({
+        where: {email: email}
+    }).
+    then((user)=>{
+        if(user.verificationCode === code){
+            winston.info("code matches");
+            user.isVerified = true;
+            user.save();
+            cb.success();
+        }
+        else{
+            winston.info("code does not match");
+            cb.failure();
+        }
+
+    })
+}
+
+
 exports.sendVerificationCode = sendVerificationCode;
+exports.verify = verify;
