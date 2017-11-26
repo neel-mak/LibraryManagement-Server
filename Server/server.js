@@ -89,7 +89,7 @@ app.get('/status', function(req,res){
 	res.send('OK');
 })
 
-//app.use('/recalls', require('./routes/recalls'));
+app.use('/user', require('./routes/user'));
 
 
 

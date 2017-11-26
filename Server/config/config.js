@@ -10,16 +10,6 @@ module.exports = {
       "dialect": "postgres"
    }
   },
-  "local": {
-    database:{
-      "username": "postgres",
-      "password": "mypassword",
-      "database": "consumesafe",
-      "host" : "localhost",
-      "port": "5432",
-      "dialect": "postgres"
-   }
-  },
   mail:{
     mailService: 'gmail',
     user:'zhang277fall17@gmail.com',
