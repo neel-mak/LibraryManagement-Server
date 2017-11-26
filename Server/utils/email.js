@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const config = require('../config/config');
+const winston = require('winston');
 const MAIL_SERVICE = config.mail.mailService;
 const ADMIN_USER = config.mail.user;
 const PASSWORD = config.mail.password;
@@ -21,23 +22,19 @@ let sendMail = (user,mailOptions)=>{
     //Set below two options of the mailOptions object from the calling method
     // subject: 'Sending Email using Node.js',
     // text: ''
-
+    winston.log("emailoptions..",mailOptions);
     if(!!!mailOptions)
         return;
 
     mailOptions.from = ADMIN_USER;
-    
-    var mailOptions = {
-        from: ADMIN_USER,
-        to: user.email,
-    };
+    mailOptions.to = user.email;
 
-
+    winston.log("sending email to user..",user.email);
     transporter.sendMail(mailOptions, function(error, info){
         if (error) {
-          console.log(error);
+          winston.log("Error while sending email",error,user.email);
         } else {
-          console.log('Email sent: ' + info.response);
+          console.log('Email sent to user: ',user.email, info.response);
         }
       });
 }
