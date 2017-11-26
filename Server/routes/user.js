@@ -95,7 +95,60 @@ router.post('/verify', (req,res)=>{
     })
     
     
+});
+
+router.post('/login',(req,res) => {
+    winston.info("request received");
+    if(!!!req.body.email || !!!req.body.password){
+        return res.json({
+            success: false,
+            message: 'Please enter email or password'
+        });
+    }
+
+    User.findOne({
+        where: {email: req.body.email}
+    }).
+    then((user)=>{
+        if(!!!user){
+            //no such user
+            res.status(404)
+            return res.json({
+                success: false,
+                message: 'User with the Email Id does not exist!'
+            });
+        }
+        else{
+            //check password
+            user.comparePassword(req.body.password,(valid)=>{
+                if(!!!valid){
+                    res.status(401);
+                    return res.json({
+                        success: false,
+                        message: 'Please check the password!'
+                    });
+                }
+                if(!!!user.isVerified){
+                    res.status(403);
+                    return res.json({
+                        success: false,
+                        message: 'Your account is not verified yet!'
+                    });
+                }
+                return res.json({
+                    success: true,
+                    message: 'User authenticated',
+                    data:user
+                });
+                
+            });
+                
+            
+        }
+    })
+
 })
+
 
 
 
