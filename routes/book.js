@@ -53,5 +53,62 @@ router.post('/add', (req, res) => {
                     }
                 })
     });
+
+ router.post('/search',(req,res) => {
+     winston.info("Came to search book");
+
+     if(!req.body.searchType) {
+         winston.info("Search type not provided");
+         return res.json({
+            success: false,
+            message: 'Please provide a searchType: byTitle / byISBN / byKeywords'
+        });
+     }
+
+     if(!req.body.searchParameters) {
+         winston.info("Search parameters empty");
+         return res.json({
+            success: false,
+            message: 'Please provide search parameter for given searchType : '+req.body.searchType
+        });
+     }
+
+     winston.info("search by",req.body.searchType);
+     switch(req.body.searchType) {
+         
+         case "byTitle" :
+         let book = {};
+         book.title = req.body.searchParameters.title;
+
+         Book.findAll({
+            where: {title: book.title}
+         }).
+            then( (books) => {
+                if(books && books.length > 0){
+                  winston.info("book(s) found",book);
+                    return res.json({
+                     success: true,
+                     message: "book(s) found",
+                     data : books
+                 });
+                }
+                else {
+                    winston.info("book not found");
+                    return res.json ({
+                        success: true,
+                        message: "book not found",
+                        data: null
+                    })
+                }
+            });
+           break; 
+        default : 
+         return res.json({
+                success: false,
+                message: "Search by provided type/parameter not supported"
+          });
+
+     }
+ });   
     
     module.exports = router;
