@@ -4,7 +4,7 @@ var bcrypt = require('bcryptjs-then');
 module.exports = function(sequelize, DataTypes) {
     
         var Book = sequelize.define('Book', {
-            bookId: {type: Sequelize.STRING, field: 'book_id'},
+            bookId: {type: Sequelize.STRING, field: 'id'},
             author: {type: Sequelize.STRING, field: 'author'},
             title: {type: Sequelize.STRING, field: 'title'},
             callNumber: {type: Sequelize.STRING, field: 'call_number'},
