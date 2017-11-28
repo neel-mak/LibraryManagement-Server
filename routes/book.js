@@ -56,6 +56,7 @@ router.post('/add', (req, res) => {
 
  router.post('/search',(req,res) => {
      winston.info("Came to search book");
+     let book = {};
 
      if(!req.body.searchType) {
          winston.info("Search type not provided");
@@ -77,7 +78,7 @@ router.post('/add', (req, res) => {
      switch(req.body.searchType) {
          
          case "byTitle" :
-         let book = {};
+         
          book.title = req.body.searchParameters.title;
 
          Book.findAll({
@@ -101,7 +102,35 @@ router.post('/add', (req, res) => {
                     })
                 }
             });
-           break; 
+           break;
+        
+        case "byISBN" : 
+        
+        book.isbn = req.body.searchParameters.isbn;
+
+        Book.findOne({
+            where : {isbn: {$contains: [book.isbn]}}
+        }).
+        then ((book) => {
+            if(book) {
+                return res.json({
+                    success: true,
+                    message: "book found",
+                    data : book
+                });
+            }
+            else
+            {
+                winston.info("book not found");
+                return res.json ({
+                    success: true,
+                    message: "book not found",
+                    data: null
+                }) 
+            }
+        });
+        break;
+
         default : 
          return res.json({
                 success: false,
