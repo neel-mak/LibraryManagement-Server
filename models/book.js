@@ -17,7 +17,7 @@ module.exports = function(sequelize, DataTypes) {
             coverageImage : {type:Sequelize.BLOB, field:'coverage_image'},
             createdBy: {type: Sequelize.STRING, field: 'created_by'},
             updatedBy: {type: Sequelize.STRING, field: 'updated_by'},
-            numAvailableCopies: {type: Sequelize.STRING, field:'num_available_copies'},
+            numAvailableCopies: {type: Sequelize.INTEGER, field:'num_available_copies'},
             isbn: {type: Sequelize.ARRAY(Sequelize.TEXT), field: 'isbn'}
         },{
             tableName: 'books',
