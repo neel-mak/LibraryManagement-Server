@@ -44,7 +44,7 @@ router.post('/add', (req, res) => {
                 Book.create(book)
                 .then((book)=>{
                     if(book){
-                        winston.info("Book Inserted..",book.bookId);
+                        winston.info("Book Inserted..",book.id);
                         return res.json({
                             success: true,
                             message: 'Successfully Inserted!',
@@ -176,7 +176,7 @@ router.post('/add', (req, res) => {
                         
                         books.forEach((book)=> {
                             var exists =  _.find(finalResults,function(result){
-                                return result.bookId == book.bookId
+                                return result.id == book.id;
                             })
                             if(!exists) finalResults.push(book)
                             else winston.info(book+"found twice");
