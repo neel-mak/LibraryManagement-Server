@@ -209,7 +209,57 @@ router.post('/add', (req, res) => {
 
             });
         break;
+        case "byUpdater" :
+        book.updatedBy = req.body.searchParameters.updatedBy;
 
+        Book.findAll({
+            where : {updatedBy:  book.updatedBy}
+        }).
+        then ((books) => {
+            if(books && books.length > 0){
+                winston.info("book(s) found",book);
+                  return res.json({
+                   success: true,
+                   message: "book(s) found",
+                   data : books
+               });
+              }
+              else {
+                  winston.info("book not found");
+                  return res.json ({
+                      success: true,
+                      message: "book not found",
+                      data: null
+                  })
+              }
+        });
+        break;
+
+        case "byCreator" :
+        book.createdBy = req.body.searchParameters.createdBy;
+
+        Book.findAll({
+            where : {createdBy:  book.createdBy}
+        }).
+        then ((books) => {
+            if(books && books.length > 0){
+                winston.info("book(s) found",book);
+                  return res.json({
+                   success: true,
+                   message: "book(s) found",
+                   data : books
+               });
+              }
+              else {
+                  winston.info("book not found");
+                  return res.json ({
+                      success: true,
+                      message: "book not found",
+                      data: null
+                  })
+              }
+        });
+        break;
 
 
         default : 
