@@ -22,7 +22,6 @@ router.post('/add', (req, res) => {
         }
            
         let book = {
-            bookId: utils.generateUUID(),
             author : req.body.author,
             title : req.body.title, 
             numOfCopies : req.body.numOfCopies,
