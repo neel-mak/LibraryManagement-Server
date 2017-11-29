@@ -12,10 +12,11 @@ module.exports = function(sequelize, DataTypes) {
         universityId: {type: Sequelize.STRING, field: 'university_id'},
         userType: {type: Sequelize.STRING, field: 'user_type'},
         verificationCode:{type: Sequelize.STRING, field: 'verification_code'},
-        isVerified: {type: Sequelize.BOOLEAN, field: 'is_verified'}
+        isVerified: {type: Sequelize.BOOLEAN, field: 'is_verified'},
+        checkedoutBooks:{type: Sequelize.ARRAY(Sequelize.STRING), field:'checkedout_books'}
     },{
         tableName: 'users',
-        timestamps: true,
+        timestamps: true, 
         createdAt: 'created_at',
         updatedAt: 'updated_at',
         instanceMethods: {
