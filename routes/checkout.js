@@ -81,7 +81,7 @@ router.post('/', (req, res) => {
             // third check Number of copies of books == 0? return 
             Book.findAll({
                 where:{
-                    bookId:{
+                    id:{
                         $in : req.body.bookIds
                     }
                 }
@@ -131,7 +131,7 @@ router.post('/', (req, res) => {
                                     let dueDate = new Date();
                                     dueDate.setDate(dueDate.getDate() + 30);
                                     let childTransaction ={
-                                        bookId:book.bookId,
+                                        bookId:book.id,
                                         patronId:req.body.patronId,
                                         checkoutDate: new Date(),
                                         dueDate: dueDate,//moment(new Date()).add(30,'days').format(""),
