@@ -18,7 +18,8 @@ const mailer = require('../utils/email');
 const Op = Sequelize.Op;
 
 router.post('/', (req, res) => {
-   // winston.info("models..",models.sequelize);
+    winston.info("req.body..",req.body);
+
     if (!req.body.email || !req.body.bookIds || req.body.bookIds.length == 0) {
         winston.info("userId/BookIds not present");
         return res.json({
@@ -81,20 +82,21 @@ router.post('/', (req, res) => {
             Book.findAll({
                 where:{
                     bookId:{
-                        [Op.in] : req.body.bookIds
+                        $in : req.body.bookIds
                     }
                 }
             })
             .then((books) => {
                 let unavailableBook = null;
                 if(books){
-                    books.forEach(book => {
-                        if(book.numAvailableCopies == 0){
-                            winston.info("Book unavailable",book);
-                            unavailableBook = book;
+                    for(let i=0;i<books.length;i++){
+                        if(books[i].numAvailableCopies == 0){
+                            winston.info("Book unavailable",books[i]);
+                            unavailableBook = books[i];
                             break;
                         }
-                    });
+                    }
+                    
                     if(unavailableBook){
                         winston.info("Book with title "+unavailableBook.title+" is unavailable!");
                         return res.json({
@@ -102,6 +104,71 @@ router.post('/', (req, res) => {
                             message: "Book with title "+unavailableBook.title+" is unavailable!"
                         });
                     }
+                    //decrement the numAvailableCopies for each book
+                    Book.update(
+                        { numAvailableCopies: models.sequelize.literal('num_available_copies -1') },
+                        { where: { 
+                            id: {
+                                $in: req.body.bookIds
+                              }
+                            } 
+                        }
+                      )
+                        .then((result) =>{
+                         // handleResult(result)
+                            winston.info("no of records updated:",result[0]);
+                            //make entry into checkout table
+                            Book.findAll({
+                                where:{
+                                    id:{
+                                        $in: req.body.bookIds
+                                    }
+                                }
+                            })
+                            .then((books)=>{
+                                let transactionArray = [];
+                                books.forEach(book => {
+                                    let dueDate = new Date();
+                                    dueDate.setDate(dueDate.getDate() + 30);
+                                    let childTransaction ={
+                                        bookId:book.bookId,
+                                        patronId:req.body.patronId,
+                                        checkoutDate: new Date(),
+                                        dueDate: dueDate,//moment(new Date()).add(30,'days').format(""),
+                                        renewCount: 0,
+                                        currentFine: 0
+                                    }
+                                    transactionArray.push(childTransaction);
+                                });
+                                Checkout.bulkCreate(transactionArray)
+                                .then(()=>{
+                                    //add these books to user table's checkedOutBooks array;
+                                    User.findOne({
+                                        where:{
+                                            email: req.body.email
+                                        }
+                                    })
+                                    .then(user=>{
+                                        winston.info(user.checkedoutBooks);
+                                        if(!!!user.checkedoutBooks)
+                                            user.checkedoutBooks = [];
+                                        user.checkedoutBooks.push.apply(user.checkedoutBooks,req.body.bookIds);
+                                        user.save();
+                                        return res.json({
+                                            success: true,
+                                            message: "Successful transaction" //TODO: change the message. send the mail
+                                        });
+                                    })
+                                })
+                            })
+
+                        })
+                        
+                        .catch(err =>
+                            winston.info(err)
+                        )
+                    
+
                 }
             })
 
