@@ -39,33 +39,47 @@ router.post('/register', (req, res) => {
         if(user){
            winston.info("user already exists",user.email);
            return res.json({
-            success: false,
-            message: 'User with this email already exists!'
-        });
+                success: false,
+                message: 'User with this email already exists!'
+            });
         }
         else{
-            winston.info("User does not exist..");
-            let user = {
-                email: req.body.email,
-                password: req.body.password,
-                universityId: req.body.universityId,
-                isVerified: false,
-                userType: userType
-            }
-            User.create(user)
-            .then((u)=>{
-                if(u){
-                    winston.info("User registered..",u.email);
-                    let verificationCode = utils.generateVerificationCode();
-                    sendVerificationCode(verificationCode,u.email);
-                    return res.json({
-                        success: true,
-                        message: 'Successfully registered!',
-                        data:u
-                    });
-
+            User.findOne({
+                where: {
+                    universityId: req.body.universityId,
+                    userType : userType
                 }
-            })
+            }).
+            then((u1) => {
+                if(u1){
+                    winston.info("User with similar type and university id exists..");
+                    return res.json({
+                        success: false,
+                        message: userType+' with this University id already exists!'
+                    });
+                }
+                let user = {
+                    email: req.body.email,
+                    password: req.body.password,
+                    universityId: req.body.universityId,
+                    isVerified: false,
+                    userType: userType
+                }
+                User.create(user)
+                .then((u)=>{
+                    if(u){
+                        winston.info("User registered..",u.email);
+                        let verificationCode = utils.generateVerificationCode();
+                        sendVerificationCode(verificationCode,u.email);
+                        return res.json({
+                            success: true,
+                            message: 'Successfully registered!',
+                            data:u
+                        });
+    
+                    }
+                });
+            });
         }
     });
 

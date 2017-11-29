@@ -6,7 +6,6 @@
   },
   "dependencies": {
     "analytics-node": "^3.0.0",
-    "bcrypt": "^1.0.3",
     "bcryptjs-then": "^1.0.1",
     "body-parser": "^1.15.1",
     "connect-timeout": "^1.8.0",
