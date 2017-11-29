@@ -7,7 +7,9 @@ const Book = models.Book;
 const winston = require('winston');
 const config = require('../config/config');
 const utils = require('../utils/util');
-
+const Op = Sequelize.Op;
+const async = require ('async');
+const _ = require('lodash');
 
 router.post('/add', (req, res) => {
 
@@ -42,7 +44,7 @@ router.post('/add', (req, res) => {
                 Book.create(book)
                 .then((book)=>{
                     if(book){
-                        winston.info("Book Inserted..",book.bookId);
+                        winston.info("Book Inserted..",book.id);
                         return res.json({
                             success: true,
                             message: 'Successfully Inserted!',
@@ -129,6 +131,136 @@ router.post('/add', (req, res) => {
             }
         });
         break;
+
+        case "byKeywords":
+        book.keywords = req.body.searchParameters.keywords;
+
+        Book.findAll({
+            where : {keywords: {$contains: [book.keywords]}}
+        }).
+        then ((books) => {
+            if(books && books.length > 0){
+                winston.info("book(s) found",book);
+                  return res.json({
+                   success: true,
+                   message: "book(s) found",
+                   data : books
+               });
+              }
+              else {
+                  winston.info("book not found");
+                  return res.json ({
+                      success: true,
+                      message: "book not found",
+                      data: null
+                  })
+              }
+        });
+        break;
+
+        case "byMultipleKeywords":
+            book.keywords = req.body.searchParameters.keywords;
+            //Initialize the array to be returned
+            var finalResults = [];
+
+            //Function for Each keyword search
+            var findBooksByKeyword = function(singleKeyword,doneCallback) {
+
+                //Search for one iteration object of the provided array
+                Book.findAll({
+                    where : {keywords: {$contains: [singleKeyword]}}
+                }).
+                then ((books) => {
+                    if(books && books.length > 0){
+                        winston.info(books.length+" book(s) found for keyword :"+singleKeyword);
+                        
+                        books.forEach((book)=> {
+                            var exists =  _.find(finalResults,function(result){
+                                return result.id == book.id;
+                            })
+                            if(!exists) finalResults.push(book)
+                            else winston.info(book+"found twice");
+                        });
+                    }
+                    else {
+                        winston.info("search returned no results for keyword :"+singleKeyword);
+                    }
+                    return doneCallback(null,books);
+                }); 
+            }
+
+            //Map over the provided array and perform database search for each and add to finalResults
+            async.map(book.keywords,findBooksByKeyword,function(err,results){
+
+                //Once Everything is done...
+                if(finalResults.length > 0) {
+                    return res.json({
+                        success:true,
+                        message: "Following books found",
+                        data: finalResults
+                    });
+                } else {
+                    return res.json({
+                        success:false,
+                        message: "No books found",
+                        data: finalResults
+                    });
+                }
+
+            });
+        break;
+        case "byUpdater" :
+        book.updatedBy = req.body.searchParameters.updatedBy;
+
+        Book.findAll({
+            where : {updatedBy:  book.updatedBy}
+        }).
+        then ((books) => {
+            if(books && books.length > 0){
+                winston.info("book(s) found",book);
+                  return res.json({
+                   success: true,
+                   message: "book(s) found",
+                   data : books
+               });
+              }
+              else {
+                  winston.info("book not found");
+                  return res.json ({
+                      success: true,
+                      message: "book not found",
+                      data: null
+                  })
+              }
+        });
+        break;
+
+        case "byCreator" :
+        book.createdBy = req.body.searchParameters.createdBy;
+
+        Book.findAll({
+            where : {createdBy:  book.createdBy}
+        }).
+        then ((books) => {
+            if(books && books.length > 0){
+                winston.info("book(s) found",book);
+                  return res.json({
+                   success: true,
+                   message: "book(s) found",
+                   data : books
+               });
+              }
+              else {
+                  winston.info("book not found");
+                  return res.json ({
+                      success: true,
+                      message: "book not found",
+                      data: null
+                  })
+              }
+        });
+        break;
+
 
         default : 
          return res.json({
