@@ -22,17 +22,17 @@ let sendMail = (user,mailOptions)=>{
     //Set below two options of the mailOptions object from the calling method
     // subject: 'Sending Email using Node.js',
     // text: ''
-    winston.log("emailoptions..",mailOptions);
+    winston.info("emailoptions..",mailOptions);
     if(!!!mailOptions)
         return;
 
     mailOptions.from = ADMIN_USER;
     mailOptions.to = user.email;
 
-    winston.log("sending email to user..",user.email);
+    winston.info("sending email to user..",user.email);
     transporter.sendMail(mailOptions, function(error, info){
         if (error) {
-          winston.log("Error while sending email",error,user.email);
+          winston.info("Error while sending email",error,user.email);
         } else {
           console.log('Email sent to user: ',user.email, info.response);
         }

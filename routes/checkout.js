@@ -91,7 +91,7 @@ router.post('/', (req, res) => {
                 if(books){
                     for(let i=0;i<books.length;i++){
                         if(books[i].numAvailableCopies == 0){
-                            winston.info("Book unavailable",books[i]);
+                            //winston.info("Book unavailable",books[i]);
                             unavailableBook = books[i];
                             break;
                         }
@@ -136,7 +136,8 @@ router.post('/', (req, res) => {
                                         checkoutDate: new Date(),
                                         dueDate: dueDate,//moment(new Date()).add(30,'days').format(""),
                                         renewCount: 0,
-                                        currentFine: 0
+                                        currentFine: 0,
+                                        isReturned: false
                                     }
                                     transactionArray.push(childTransaction);
                                 });
@@ -154,6 +155,9 @@ router.post('/', (req, res) => {
                                             user.checkedoutBooks = [];
                                         user.checkedoutBooks.push.apply(user.checkedoutBooks,req.body.bookIds);
                                         user.save();
+
+                                        //send mail with transcation details.
+                                        sendCheckoutMail(books,transactionArray,user);
                                         return res.json({
                                             success: true,
                                             message: "Successful transaction" //TODO: change the message. send the mail
@@ -188,5 +192,25 @@ router.post('/', (req, res) => {
 
 });
 
+
+let sendCheckoutMail = (booksArr, transactionArray, user) =>{
+    
+
+    let mailOptions = {};
+    mailOptions.subject = "Your recent checkout details";
+    let mailText = ["Hi,","\nBelow is your recent checkout information:\n"];
+    for(let i=0;i<booksArr.length;i++){
+        mailText.push((i+1) +". "+ booksArr[i].title + " by "+booksArr[i].author+"\n");
+        mailText.push("Checkout time: "+moment(transactionArray[i].checkoutDate).format("MMMM Do YYYY, h:mm a"));
+        mailText.push("Due date: "+moment(transactionArray[i].dueDate).format("MMMM Do YYYY") +"\n");
+        //add more details as required
+    }
+    mailText.push("Thank you,");
+    mailText.push("Team MyLib");
+    mailText = mailText.join("\n");
+    mailOptions.text = mailText;
+    winston.info("mail text..",mailOptions.text);
+    mailer.sendMail(user,mailOptions);
+}
 
 module.exports = router;

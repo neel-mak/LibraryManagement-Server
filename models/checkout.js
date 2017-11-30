@@ -11,7 +11,8 @@ module.exports = function(sequelize, DataTypes) {
         checkoutDate: {type: Sequelize.DATE, field: 'checkout_date'},
         dueDate: {type: Sequelize.DATE, field: 'due_date'},
         renewCount:{type: Sequelize.INTEGER, field: 'renew_count'},
-        currentFine: {type: Sequelize.INTEGER, field: 'current_fine'}
+        currentFine: {type: Sequelize.INTEGER, field: 'current_fine'},
+        isReturned: {type: Sequelize.BOOLEAN, field: 'is_returned'}
     },{
         tableName: 'checkouts',
         timestamps: true,
