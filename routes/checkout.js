@@ -157,10 +157,11 @@ router.post('/', (req, res) => {
                                         user.save();
 
                                         //send mail with transcation details.
-                                        sendCheckoutMail(books,transactionArray,user);
+                                        let checkoutInfo = sendCheckoutMail(books,transactionArray,user);
                                         return res.json({
                                             success: true,
-                                            message: "Successful transaction" //TODO: change the message. send the mail
+                                            message: "Successful transaction", //TODO: change the message. send the mail
+                                            data: checkoutInfo
                                         });
                                     })
                                 })
@@ -171,7 +172,6 @@ router.post('/', (req, res) => {
                         .catch(err =>
                             winston.info(err)
                         )
-                    
 
                 }
             })
@@ -183,13 +183,6 @@ router.post('/', (req, res) => {
         
     })
     
-    
-    
-    
-    
-    
-    
-
 });
 
 
@@ -199,18 +192,22 @@ let sendCheckoutMail = (booksArr, transactionArray, user) =>{
     let mailOptions = {};
     mailOptions.subject = "Your recent checkout details";
     let mailText = ["Hi,","\nBelow is your recent checkout information:\n"];
+    mailText.push("----------------------------------------");
     for(let i=0;i<booksArr.length;i++){
         mailText.push((i+1) +". "+ booksArr[i].title + " by "+booksArr[i].author+"\n");
         mailText.push("Checkout time: "+moment(transactionArray[i].checkoutDate).format("MMMM Do YYYY, h:mm a"));
         mailText.push("Due date: "+moment(transactionArray[i].dueDate).format("MMMM Do YYYY") +"\n");
+        transactionArray[i].book = booksArr[i];
         //add more details as required
     }
+    mailText.push("----------------------------------------");
     mailText.push("Thank you,");
     mailText.push("Team MyLib");
     mailText = mailText.join("\n");
     mailOptions.text = mailText;
     winston.info("mail text..",mailOptions.text);
     mailer.sendMail(user,mailOptions);
+    return transactionArray;
 }
 
 module.exports = router;

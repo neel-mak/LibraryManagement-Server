@@ -14,5 +14,6 @@ module.exports = {
     mailService: 'gmail',
     user:'zhang277fall17@gmail.com',
     password: 'zhang27717'
-  }
+  },
+  "finePerDay":1
 }
