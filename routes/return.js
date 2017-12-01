@@ -104,7 +104,7 @@ router.post('/', (req, res) => {
                 })
             }
         })
-        //future: check waitlist. If user present, insert hold. decrement the count.
+        //future: check waitlist. If user present, insert hold. decrement the count.emit event bookavailable
     })
     
 });
