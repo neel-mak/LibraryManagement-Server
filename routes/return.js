@@ -167,6 +167,32 @@ let calculateFine = (checkoutInfo) => {
 }
 
 
+
+let sendBookAvailableMail = (book,user,hold) =>{
+    
+
+    let mailOptions = {};
+    mailOptions.subject = "Book with title "+book.title+" available for checkout";
+    let mailText = ["Hi,","\nThe following book has become available and put on hold for you. :\n"];
+    mailText.push("----------------------------------------");
+    
+    mailText.push((1) +". "+ book.title + " by "+book.author);
+    mailText.push("Hold expires on: "+moment(hold.endDate).format("MMMM Do YYYY"));
+    
+        
+        //add more details as required
+    
+    mailText.push("----------------------------------------");
+    mailText.push("Thank you,");
+    mailText.push("Team MyLib");
+    mailText = mailText.join("\n");
+    mailOptions.text = mailText;
+    winston.info("mail text..",mailOptions.text);
+    mailer.sendMail(user,mailOptions);
+    
+}
+
+
 let onBookAvailable = (book)=>{
     winston.info("Event received. Book available..",book.title);
     winston.info("Now checking waitlist for..",book.title);
@@ -218,7 +244,16 @@ let onBookAvailable = (book)=>{
                             then((updatedRecords)=>{
                                 if(updatedRecords){
                                     winston.info("Book count updated...");
-                                    winston.info("Job done...");
+                                    winston.info("Job done...send email");
+                                    User.findOne({
+                                        where:{
+                                            id:firstInQueue.patronId
+                                        }
+                                    })
+                                    .then((user)=>{
+                                        sendBookAvailableMail(book,user,hold);
+                                    });
+                                    //TODO: mail user about the book availability;
                                 }
                             })
                         });
