@@ -8,6 +8,7 @@ const Sequelize = require('sequelize');
 const models = require('../models/index');
 const User = models.User;
 const Book = models.Book;
+const Waitlist = models.Waitlist;
 const Checkout = models.Checkout;
 const winston = require('winston');
 const moment = require('moment');
@@ -16,6 +17,7 @@ const config = require('../config/config');
 const utils = require('../utils/util');
 const mailer = require('../utils/email');
 const Op = Sequelize.Op;
+const _ = require('underscore');
 
 router.post('/', (req, res) => {
     winston.info("req.body..",req.body);
@@ -205,6 +207,108 @@ router.post('/', (req, res) => {
     
 });
 
+
+router.post('/addToWaitlist',(req, res) => {
+    winston.info("req.body..",req.body);
+    
+    if (!!!req.body.email || !!!req.body.bookId) {
+        winston.info("userId/BookId not present");
+        return res.json({
+            success: false,
+            message: 'Please submit userId/BookId'
+        });
+    }
+    winston.info("finding user..",req.body.email);
+    User.findOne({
+        where: {email: req.body.email}
+    }).
+    then((user)=>{
+        if(!!!user){
+            winston.info("user not present..",req.body.email);
+            return res.json({
+                success: false,
+                message: 'User not present'
+            });
+        }
+        Waitlist.findOne({
+            where:{
+                bookId: req.body.bookId
+            }
+        }).
+        then((waitlist)=>{
+            if(!!!waitlist){
+                winston.info("Waitlist does not exist for this book yet");
+                let waitlistObj = {
+                    bookId: req.body.bookId,
+                    patronList: [
+                        {
+                            patronId: req.body.patronId,
+                            waitlistDate: new Date(),
+                            waiting: true
+                        }
+                    ]
+                };
+                Waitlist.create(waitlistObj).
+                then((waitlist)=>{
+                    if(waitlist){
+                        winston.info("waitlist entry created...");
+                        return res.json({
+                            success: true,
+                            message: 'You have been added to the waitlist!'
+                        });
+                    }
+                    else{
+                        winston.info("something went wrong");
+                        return res.json({
+                            success: false,
+                            message: 'Please try again!'
+                        });
+                    }
+                })
+            }
+            else{
+                //waitlist exists
+                winston.info("Waitlist already exists for this book",waitlist.get({plain:true}));
+
+                let patronListArr = waitlist.get('patronList');
+                
+                let u = _.find(patronListArr,(p)=>{
+                    return p.patronId == req.body.patronId
+                });
+                
+                if(u){
+                    winston.info("You are already on the waitlist for this book");
+                    return res.json({
+                        success: false,
+                        message: 'You are already on the waitlist for this book'
+                    });
+                }
+
+                patronListArr.push(
+                    {
+                        patronId: req.body.patronId,
+                        waitlistDate: new Date(),
+                        waiting: true
+                    }
+                );
+                waitlist.set('patronList',null);
+                waitlist.set('patronList',patronListArr);
+
+                waitlist.save().
+                then((w)=>{
+                    if(w){
+                        winston.info("waitlist entry created...",w.get({plain:true}));
+                    }
+                });
+                winston.info("waitlist entry created...");
+                return res.json({
+                    success: true,
+                    message: 'You have been added to the waitlist!'
+                });
+            }
+        })
+    });
+});
 
 let sendCheckoutMail = (booksArr, transactionArray, user) =>{
     
