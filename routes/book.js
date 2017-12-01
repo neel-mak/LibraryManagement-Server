@@ -11,6 +11,8 @@ const Op = Sequelize.Op;
 const async = require('async');
 const _ = require('lodash');
 const Checkout = models.Checkout;
+const ISBNParser = require('isbn').ISBN;
+const ISBNLookup = require('node-isbn');
 
 router.post('/add', (req, res) => {
 
@@ -47,6 +49,7 @@ router.post('/add', (req, res) => {
     }
   })
 });
+
 
 router.post('/search', (req, res) => {
   winston.info("Came to search book");
@@ -315,5 +318,39 @@ router.post('/delete', (req,res) =>{
     
     });
 
+
+router.post('/lookupISBN',(req,res)=> {
+  winston.info("came to isbn");
+  if(!req.body.isbn) {
+    res.json({success:false,message:"ISBN not provided"});
+  } else {
+    winston.info("parsing isbn");
+    var isbnValue = ISBNParser.parse(req.body.isbn);
+    winston.info("done parsing");
+    if(!isbnValue) {
+      res.json({success:false,message:"Not a valid ISBN format, supported formats: 10a,10b,13a,13b"});
+    }
+    else {
+      winston.info(isbnValue.asIsbn10());
+      ISBNLookup.resolve(isbnValue.asIsbn10(),(err,book)=> {
+        if(err)
+        {
+          winston.info(err);
+          res.json({success:false,message:"book not found"});
+        } else {
+          foundBook = Book.build({
+            title : book.title,
+            author : book.authors[0],
+            publisher : book.publisher,
+            isbn: [isbnValue.asIsbn10()]
+          });
+
+          res.json({success : true, message: "Book found", data: foundBook});
+        }
+      });
+
+    } 
+  }
+});
 
 module.exports = router;
