@@ -10,6 +10,7 @@ const utils = require('../utils/util');
 const Op = Sequelize.Op;
 const async = require('async');
 const _ = require('lodash');
+const Checkout = models.Checkout;
 
 router.post('/add', (req, res) => {
 
@@ -282,5 +283,37 @@ router.post('/update', (req, res) => {
     }
   });
 });
+
+router.post('/delete', (req,res) =>{
+  winston.info("came to delete");
+   if (!req.body.id) {
+    winston.info("Please provide book id");
+    return res.json({success: false, message: 'Please enter id'});
+  }
+    Book.findOne({
+      where: { id:req.body.id } 
+    }).
+    then((book)=> {
+      winston.info("After searching");
+        if(!book) {
+          res.json({success:false, message: "Book with given id not found"});
+        } else {
+        //check if the book is checkedout or is valid for deletion
+        if(book.numAvailableCopies != book.numOfCopies) {
+
+                winston.info("Book not retured yet:"+book.numAvailableCopies+ " : "+book.numOfCopies);
+                res.json({success: false, message: "Books cannot be deleted while checkedout by a patron"});
+        } else {
+          Book.destroy({
+            where: {id:book.id}
+          }).then ((response)=> {
+            res.json({status: true, message: "Book deleted"})
+          })
+        }
+      }
+      });
+    
+    });
+
 
 module.exports = router;
