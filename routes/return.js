@@ -251,9 +251,10 @@ let onBookAvailable = (book)=>{
                                         }
                                     })
                                     .then((user)=>{
+                                        // mail user about the book availability;
                                         sendBookAvailableMail(book,user,hold);
                                     });
-                                    //TODO: mail user about the book availability;
+                                    
                                 }
                             })
                         });

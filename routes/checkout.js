@@ -310,6 +310,95 @@ router.post('/addToWaitlist',(req, res) => {
     });
 });
 
+//renew book
+
+router.post('/renew',(req, res) =>{
+    winston.info("req.body..",req.body);
+    
+        if (!!!req.body.email || !!!req.body.bookId || !!!req.body.patronId) {
+            winston.info("userId/BookId not present");
+            return res.json({
+                success: false,
+                message: 'Please submit userId/BookId'
+            });
+        }
+        winston.info("finding user..",req.body.email);
+        User.findOne({
+            where: {email: req.body.email}
+        }).
+        then((user)=>{
+            if(!!!user){
+                winston.info("user not present..",req.body.email);
+                return res.json({
+                    success: false,
+                    message: 'User not present'
+                });
+            }
+
+            winston.info("Now checking renew count for the book...");
+
+            Checkout.findOne({
+                where:{
+                    patronId: req.body.patronId,
+                    bookId: req.body.bookId,
+                    isReturned: false
+                }
+            })
+            .then((c)=>{
+                if(!!!c){
+                    return res.json({
+                        success: false,
+                        message: 'Checkout record not found'
+                    });
+                }
+                if(c.renewCount && c.renewCount >=2){
+                    winston.info("You can renew a book only twice!");
+                    return res.json({
+                        success: false,
+                        message: 'You can renew a book only twice!'
+                    });
+                }
+                winston.info("Now checking if any waitlist exists for the book...");
+
+                Waitlist.findOne({
+                    where:{
+                        bookId:req.body.bookId
+                    }
+                })
+                .then((w) =>{
+                    if(w && w.patronList && w.patronList.length > 0){
+                        winston.info("Waitlist exists for this book, can not renwew");
+                        return res.json({
+                            success: false,
+                            message: 'You can not renew this book as there is a waitlist for it'
+                        });
+                    }
+                    winston.info("Now renewing...");
+                    if(!!!c.renewCount)
+                        c.renewCount = 0;
+                    c.renewCount++;
+                    let dueDate = c.get('dueDate');
+                    winston.info("Old due date...",dueDate);
+                    dueDate.setDate(dueDate.getDate() + 30);
+                    winston.info("renewed due date...",dueDate);
+                    c.set('dueDate',null);
+                    c.set('dueDate',dueDate);
+                    c.save()
+                    .then((checkout)=>{
+                        if(checkout){
+                            winston.info("Book renewed!");
+                            return res.json({
+                                success: true,
+                                message: 'Book successfully renewed!'
+                            });
+                        }
+                    });
+                })
+
+            })
+        });
+});
+
 let sendCheckoutMail = (booksArr, transactionArray, user) =>{
     
 
