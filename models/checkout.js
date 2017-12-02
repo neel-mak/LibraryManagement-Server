@@ -12,7 +12,9 @@ module.exports = function(sequelize, DataTypes) {
         dueDate: {type: Sequelize.DATE, field: 'due_date'},
         renewCount:{type: Sequelize.INTEGER, field: 'renew_count'},
         currentFine: {type: Sequelize.INTEGER, field: 'current_fine'},
-        isReturned: {type: Sequelize.BOOLEAN, field: 'is_returned'}
+        isReturned: {type: Sequelize.BOOLEAN, field: 'is_returned'},
+        alertCount: {type: Sequelize.INTEGER, field: 'alert_count'},
+        lastAlertSentOn: {type: Sequelize.INTEGER, field: 'last_alert_sent_on'}
     },{
         tableName: 'checkouts',
         timestamps: true,

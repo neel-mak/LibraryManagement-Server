@@ -27,8 +27,8 @@ var morgan = require('morgan');
 var timeout = require('connect-timeout');
 
 
-//var cronTab = require('./lib/cronTab');
-//var cronJob = require('cron').CronJob;
+var monitoring = require('./utils/monitoring');
+var cronJob = require('cron').CronJob;
 
 
 process.on('unhandledRejection', function(e) {
@@ -114,3 +114,4 @@ winston.info('info','Your server is running in ' + app.get('env') + ' on port ' 
 // }, null, false);
 
 //updateRecallsJob.start();
+monitoring.start();
