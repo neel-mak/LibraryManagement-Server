@@ -73,11 +73,12 @@ let processCheckout = (checkoutInfo) =>{
         winston.info("Alerts have been sent for this checkout..");
         let d = new Date();
         d.setDate(lastAlertSentOn);
-        checkoutInfo.lastAlertSentOn
+        //checkoutInfo.lastAlertSentOn
         if(alertCount >= 5){
             winston.info("Five alerts sent already. no need to send any more.");
             return;
         }
+        
     }
 }
 

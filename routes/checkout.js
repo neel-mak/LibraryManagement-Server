@@ -85,7 +85,7 @@ router.post('/', (req, res) => {
             //second check: How many books today? >=3 return
             winston.info("Now checking today's total checkouts...");
             let today = moment().format("YYYY-MM-DD");
-            models.sequelize.query("SELECT * FROM checkouts WHERE checkout_date :: date = '"+today+ "' ::date",{ type: models.sequelize.QueryTypes.SELECT})
+            models.sequelize.query("SELECT * FROM checkouts WHERE checkout_date :: date = '"+today+ "' ::date AND patron_id ="+req.body.patronId,{ type: models.sequelize.QueryTypes.SELECT})
             .then((checkouts) => {
                 // Results will be an empty array and metadata will contain the number of affected rows.
                 winston.info("checkouts...",checkouts);
