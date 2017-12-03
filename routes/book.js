@@ -109,6 +109,23 @@ router.post('/search', (req, res) => {
         }
       });
       break;
+      case "byId":
+
+        book.id = req.body.searchParameters.id;
+
+        Book.findOne({
+          where: {
+            id: book.id
+            }
+          }).then((book) => {
+          if (book) {
+            return res.json({success: true, message: "book found", data: book});
+          } else {
+            winston.info("book not found");
+            return res.json({success: true, message: "book not found", data: null})
+          }
+        });
+        break;
 
     case "byKeywords":
       book.keywords = req.body.searchParameters.keywords;
@@ -261,7 +278,11 @@ router.post('/update', (req, res) => {
         }
       updatedBook.isbn = req.body.isbn || dbBook.isbn;
 
-      Book.update(updatedBook, {
+      if(updatedBook.numAvailableCopies < 0)
+      {
+        res.json({success:false, message: "Invalid quantity update, some books already checkedout"});
+      } else {
+        Book.update(updatedBook, {
         where: {
           id: book.id
         }
@@ -282,7 +303,7 @@ router.post('/update', (req, res) => {
           });
         }
 
-      })
+      }) }
     }
   });
 });
