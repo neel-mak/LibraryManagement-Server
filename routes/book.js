@@ -380,8 +380,8 @@ router.get('/all',(req,res) => {
   }).
   then((books) => {
     if(books)
-    res.json({sucess:true,message:"All books",data:books});
-    else res.json({sucess:false,message:"No books found"});
+    res.json({success:true,message:"All books",data:books});
+    else res.json({success:false,message:"No books found"});
   })
 })
 
