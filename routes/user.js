@@ -25,12 +25,12 @@ router.post('/register', (req, res) => {
             message: 'Please enter email and password'
         });
     }
-    
-    
+
+
 
     let userType = (req.body.email).substr((req.body.email).indexOf('@')+1,(req.body.email).length) === "sjsu.edu" ? "librarian" : "patron";
 
-    
+
     winston.info("finding user..",req.body.email);
     User.findOne({
         where: {email: req.body.email}
@@ -76,7 +76,7 @@ router.post('/register', (req, res) => {
                             message: 'Successfully registered!',
                             data:u
                         });
-    
+
                     }
                 });
             });
@@ -97,12 +97,12 @@ router.post('/verify', (req,res)=>{
     }
 
     verify(req.body.verificationCode,req.body.email,{
-        success: (user) => {  
+        success: (user) => {
             mailer.sendMail(user,{
                 "subject":"Account verified!",
                 "text":"Hi!\nYour account is verified! You can now start using your account!"
             });
-            
+
             res.json({
                 success: true,
                 message: 'User verified!'
@@ -115,8 +115,8 @@ router.post('/verify', (req,res)=>{
             });
         }
     })
-    
-    
+
+
 });
 
 router.post('/login',(req,res) => {
@@ -162,13 +162,24 @@ router.post('/login',(req,res) => {
                     message: 'User authenticated',
                     data:user
                 });
-                
+
             });
-                
-            
+
+
         }
     })
 
+})
+
+router.get('/all',(req,res) => {
+  User.findAll({
+    attributes: ['email','universityId','userType']
+  }).
+  then((users) => {
+    if(users)
+    res.json({sucess:true,message:"All users",data:users});
+    else res.json({sucess:false,message:"No users found"});
+  })
 })
 
 

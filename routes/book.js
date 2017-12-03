@@ -294,7 +294,7 @@ router.post('/delete', (req,res) =>{
     return res.json({success: false, message: 'Please enter id'});
   }
     Book.findOne({
-      where: { id:req.body.id } 
+      where: { id:req.body.id }
     }).
     then((book)=> {
       winston.info("After searching");
@@ -315,7 +315,7 @@ router.post('/delete', (req,res) =>{
         }
       }
       });
-    
+
     });
 
 
@@ -349,8 +349,19 @@ router.post('/lookupISBN',(req,res)=> {
         }
       });
 
-    } 
+    }
   }
 });
+
+router.get('/all',(req,res) => {
+  Book.findAll({
+    attributes: ['id','author','title','callNumber','publisher','locationInLibrary','numOfCopies','numAvailableCopies','currentStatus','keywords','coverageImage','isbn']
+  }).
+  then((books) => {
+    if(books)
+    res.json({sucess:true,message:"All books",data:books});
+    else res.json({sucess:false,message:"No books found"});
+  })
+})
 
 module.exports = router;
