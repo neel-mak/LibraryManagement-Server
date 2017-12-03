@@ -415,7 +415,7 @@ let sendCheckoutMail = (booksArr, transactionArray, user) =>{
     }
     mailText.push("----------------------------------------");
     mailText.push("Thank you,");
-    mailText.push("Team MyLib");
+    mailText.push("Team SNAPLibrary");
     mailText = mailText.join("\n");
     mailOptions.text = mailText;
     winston.info("mail text..",mailOptions.text);

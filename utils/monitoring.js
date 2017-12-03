@@ -45,8 +45,8 @@ let dueDateCheck = () => {
         where:{
            isReturned: false,
            dueDate: {
-               $lte: dueDateRange,
-               $gt: new Date()
+               $lte: moment(dueDateRange).format(),
+               $gt: moment().format()
            }
             //due date which is less than currentDate + 5
         }
@@ -56,9 +56,9 @@ let dueDateCheck = () => {
             winston.info("checkouts found...",checkouts.length);
             if(checkouts.length > 0){
                 winston.info("Checkouts found. Processing them...");
-                /* checkouts.forEach(checkout => {
+                checkouts.forEach(checkout => {
                     eventEmitter.emit('processCheckout',checkout);    
-                }); */
+                });
             }
         }
     })
@@ -68,18 +68,65 @@ let dueDateCheck = () => {
 let processCheckout = (checkoutInfo) =>{
     if(!!!checkoutInfo.lastAlertSentOn || checkoutInfo.alertCount === 0){
         winston.info("No alerts sent yet for checkout..",checkoutInfo.id);
+        checkoutInfo.alertCount = 0;
+        //checkoutInfo.lastAlertSentOn = new Date();
     }
-    else if(checkoutInfo.lastAlertSentOn && checkoutInfo.alertCount > 0){
+    
         winston.info("Alerts have been sent for this checkout..");
         let d = new Date();
-        d.setDate(lastAlertSentOn);
+        d.setDate(checkoutInfo.lastAlertSentOn);
         //checkoutInfo.lastAlertSentOn
-        if(alertCount >= 5){
-            winston.info("Five alerts sent already. no need to send any more.");
+        if(checkoutInfo.lastAlertSentOn && d.getDay === new Date().getDay){
+            winston.info("Alert for today aleady sent..");
             return;
         }
+        if(checkoutInfo.alertCount &&  checkoutInfo.alertCount>= 5){
+            winston.info("Five alerts sent already. No need to send any more.");
+            return;
+        }
+
+        winston.info("Send alert for today...");
         
-    }
+        checkoutInfo.alertCount++;
+        checkoutInfo.set('alertCount',checkoutInfo.alertCount);
+        checkoutInfo.set('lastAlertSentOn',null);
+        checkoutInfo.set('lastAlertSentOn',new Date());
+        checkoutInfo.save();
+        sendDueDateWarningMail(checkoutInfo);
+    
+}
+
+
+let sendDueDateWarningMail = (checkoutInfo) => {
+    let mailOptions = {};
+    mailOptions.subject = "Book due notice";
+    let mailText = ["Hi,","\nBelow book is due in "+(5-checkoutInfo.alertCount+1) +" day(s):\n"];
+    mailText.push("----------------------------------------");
+    Book.findOne({
+        where:{
+            id: checkoutInfo.bookId
+        }
+    })
+    .then((book)=>{
+        mailText.push(book.title + " by "+book.author+"\n");
+        mailText.push("Due date: "+moment(checkoutInfo.dueDate).format("MMMM DD YYYY")+"\n");
+        mailText.push("----------------------------------------");
+        mailText.push("Thank you,");
+        mailText.push("Team SNAPLibrary");
+        mailText = mailText.join("\n");
+        mailOptions.text = mailText;
+        winston.info("mail text..",mailOptions.text);
+        User.findOne({
+            where:{
+                id: checkoutInfo.patronId
+            }
+        })
+        .then((user)=>{
+            mailer.sendMail(user,mailOptions);
+        })
+       
+    });
+
 }
 
 
