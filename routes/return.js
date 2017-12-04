@@ -20,6 +20,7 @@ const utils = require('../utils/util');
 const mailer = require('../utils/email');
 const events = require('events');
 const eventEmitter = new events.EventEmitter();
+const eventReceivers = require('../utils/eventReceivers');
 const Op = Sequelize.Op;
 
 
@@ -193,82 +194,6 @@ let sendBookAvailableMail = (book,user,hold) =>{
 }
 
 
-let onBookAvailable = (book)=>{
-    winston.info("Event received. Book available..",book.title);
-    winston.info("Now checking waitlist for..",book.title);
-
-    Waitlist.findOne({
-        where:{
-            bookId:book.id
-        }
-    }).
-    then((w)=>{
-        if(w){
-            winston.info("Waitlist entry exists for ..",book.title);
-            let patronList = w.get('patronList');
-            w.set('patronList',null);
-            if(patronList && patronList.length > 0){
-                let firstInQueue = patronList[0];
-                let endDate = new Date();
-                endDate.setDate(endDate.getDate() + 3);
-                winston.info("Creating hold for patron..",firstInQueue);
-                Hold.create({
-                    bookId:book.id,
-                    patronId:firstInQueue.patronId,
-                    startDate: new Date(),
-                    endDate:endDate,
-                    isActive:true
-                }).
-                then((hold)=>{
-                    if(hold){
-                        winston.info("hold created for patron..",firstInQueue);
-                        //update the waitlist
-                        winston.info("updating waitlist...");
-                        
-                        patronList.shift();
-                        winston.info("updating waitlist...",patronList);
-                        w.set('patronList',patronList);
-                        w.save()
-                        .then((w1)=>{
-                            //update the book count
-                            winston.info("updating book count...");
-                            Book.update(
-                                { 
-                                    numAvailableCopies: models.sequelize.literal('num_available_copies -1') 
-                                },
-                                {
-                                    where: {
-                                        id:book.id
-                                }
-                            }).
-                            then((updatedRecords)=>{
-                                if(updatedRecords){
-                                    winston.info("Book count updated...");
-                                    winston.info("Job done...send email");
-                                    User.findOne({
-                                        where:{
-                                            id:firstInQueue.patronId
-                                        }
-                                    })
-                                    .then((user)=>{
-                                        // mail user about the book availability;
-                                        sendBookAvailableMail(book,user,hold);
-                                    });
-                                    
-                                }
-                            })
-                        });
-                        
-                    }
-                })
-            }
-            else{
-                winston.info("No patrons on waitlist for ..",book.title);
-            }
-        }
-    })
-}
-
-eventEmitter.on('bookAvailable', onBookAvailable);
+eventEmitter.on('bookAvailable', eventReceivers.onBookAvailable);
 
 module.exports = router;

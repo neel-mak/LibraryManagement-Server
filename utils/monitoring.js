@@ -5,6 +5,7 @@ const models = require('../models/index');
 const moment = require('moment');
 const config = require('../config/config');
 const utils = require('../utils/util');
+const eventReceivers = require('../utils/eventReceivers');
 const mailer = require('../utils/email');
 const Op = Sequelize.Op;
 const _ = require('underscore');
@@ -12,6 +13,7 @@ const events = require('events');
 const eventEmitter = new events.EventEmitter();
 const User = models.User;
 const Book = models.Book;
+const Hold = models.Hold;
 const Waitlist = models.Waitlist;
 const Checkout = models.Checkout;
 
@@ -19,14 +21,14 @@ const Checkout = models.Checkout;
 const dueDateMonitor = new cronJob("* * * * *", function() {
         //cron expression: min hour * * *
         console.log("Due dates monitoring job start: " + new Date());
-        dueDateCheck();
+        checkDueDate();
     }, null, false);
 //A job to check holds
 
 const holdMonitor = new cronJob("* * * * *", function() {
     //cron expression: min hour * * *
     console.log("Holds monitoring job start: " + new Date());
-    //updateRecallRecordsJob();
+    checkHolds();
 }, null, false);
 
 
@@ -37,7 +39,7 @@ let start = ()=>{
 }
 
 
-let dueDateCheck = () => {
+let checkDueDate = () => {
     let dueDateRange = new Date();
     dueDateRange = dueDateRange.setDate(dueDateRange.getDate() + 5);
     winston.info("dueDateRange...",dueDateRange);
@@ -75,9 +77,12 @@ let processCheckout = (checkoutInfo) =>{
         winston.info("Alerts have been sent for this checkout..");
         let d = new Date();
         d.setDate(checkoutInfo.lastAlertSentOn);
+        
+        winston.info("Alert sent on..",moment(checkoutInfo.lastAlertSentOn).format("DD"));
+        let lastAlertSentOn = moment(checkoutInfo.lastAlertSentOn).format("DD");
         //checkoutInfo.lastAlertSentOn
-        if(checkoutInfo.lastAlertSentOn && d.getDay === new Date().getDay){
-            winston.info("Alert for today aleady sent..");
+        if(checkoutInfo.lastAlertSentOn!== null && lastAlertSentOn === moment().format("DD")){
+            winston.info("Alert for today aleady sent..",lastAlertSentOn);
             return;
         }
         if(checkoutInfo.alertCount &&  checkoutInfo.alertCount>= 5){
@@ -92,7 +97,55 @@ let processCheckout = (checkoutInfo) =>{
         checkoutInfo.set('lastAlertSentOn',null);
         checkoutInfo.set('lastAlertSentOn',new Date());
         checkoutInfo.save();
-        sendDueDateWarningMail(checkoutInfo);
+        //sendDueDateWarningMail(checkoutInfo);
+    
+}
+
+let checkHolds = () => {
+    
+    Hold.findAll({
+        where:{
+            isActive: true
+        }
+    })
+    .then((holds) => {
+        if(holds && holds.length > 0){
+            winston.info("Active holds found...",holds.length);
+            holds.forEach(hold => {
+                eventEmitter.emit('processHold',hold);    
+            });
+        }
+        else{
+            winston.info("No Active holds found...");
+        }
+    })
+        
+}
+
+let processHold = (holdInfo) =>{
+    winston.info("Process hold event received",holdInfo.get({plain:true}));
+    
+    let endDate =moment(holdInfo.endDate).format("DD");
+    //winston.info("Hold end date...",endDate);
+    winston.info("Hold end date moment...",moment(holdInfo.endDate));
+    if(endDate <= moment().format("DD")){
+        winston.info("Hold expired...",holdInfo.id);
+        holdInfo.set('isActive',false);
+        holdInfo.save()
+        .then((h)=>{
+            winston.info("Hold updated...",holdInfo.id);
+            Book.findOne({
+                where:{
+                    id: holdInfo.bookId
+                }
+            })
+            .then((book)=>{
+                if(book){
+                    eventEmitter.emit('bookAvailable',book);            
+                }
+            })
+        });
+    } 
     
 }
 
@@ -131,6 +184,10 @@ let sendDueDateWarningMail = (checkoutInfo) => {
 
 
 eventEmitter.on('processCheckout', processCheckout);
+
+eventEmitter.on('processHold', processHold);
+
+eventEmitter.on('bookAvailable', eventReceivers.onBookAvailable);
 
 exports.start =  start;
 
