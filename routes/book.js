@@ -18,9 +18,9 @@ router.post('/add', (req, res) => {
 
   winston.info("Came to add book route");
 
-  if (!req.body.author || !req.body.title || !req.body.numOfCopies || !req.body.createdBy) {
+  if (!req.body.author || !req.body.title || !req.body.numOfCopies || !req.body.createdBy || !req.body.publisher) {
     winston.info("Author / Title / Num of Copies / CreatedBy not present");
-    return res.json({success: false, message: 'Please enter bookId,author,title, numOfCopies, createdBy'});
+    return res.json({success: false, message: 'Please enter bookId,author,title, numOfCopies, createdBy, Publisher'});
   }
 
   let book = {
@@ -331,7 +331,7 @@ router.post('/delete', (req,res) =>{
           Book.destroy({
             where: {id:book.id}
           }).then ((response)=> {
-            res.json({status: true, message: "Book deleted"})
+            res.json({success: true, message: "Book deleted"})
           })
         }
       }
