@@ -180,6 +180,10 @@ router.post('/', (req, res) => {
 
                                             //send mail with transcation details.
                                             let checkoutInfo = sendCheckoutMail(books,transactionArray,user);
+                                            checkoutInfo.forEach(c => {
+                                                c.checkoutDate = moment(c.checkoutDate).format("MMMM Do YYYY");
+                                                c.dueDate = moment(c.dueDate).format("MMMM Do YYYY");
+                                            });
                                             return res.json({
                                                 success: true,
                                                 message: "Successful transaction", //TODO: change the message. send the mail
