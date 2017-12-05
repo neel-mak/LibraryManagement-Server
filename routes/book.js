@@ -13,6 +13,7 @@ const _ = require('lodash');
 const Checkout = models.Checkout;
 const ISBNParser = require('isbn').ISBN;
 const ISBNLookup = require('node-isbn');
+const moment = require('moment');
 
 router.post('/add', (req, res) => {
 
@@ -406,6 +407,8 @@ router.post('/myBooks',(req,res) => {
         checkouts = checkouts.map( (r) => ( r.toJSON() ) );
         let bookIds = [];
         checkouts.forEach(c => {
+          c.checkoutDate = moment(c.checkoutDate).format("MMMM Do YYYY");
+          c.dueDate = moment(c.dueDate).format("MMMM Do YYYY");
           bookIds.push(c.bookId);
         });
 
@@ -434,7 +437,7 @@ router.post('/myBooks',(req,res) => {
             //winston.info("Book..",checkouts[0].book.title);
             return res.json({
                 success: true,
-                message: responseArr
+                data: responseArr
             });
           }
         })
