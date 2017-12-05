@@ -23,6 +23,7 @@ app = express();
 
 var bodyParser = require('body-parser');
 var morgan = require('morgan');
+var moment = require('moment');
 
 var timeout = require('connect-timeout');
 
@@ -88,6 +89,12 @@ app.get('/status', function(req,res){
 	res.status(200);
 	res.send('OK');
 })
+
+app.get('/time', function(req,res){
+    res.json({
+        "currentTime":moment().format("MMMM Do YYYY, h:mm a")
+    })
+});
 
 app.use('/user', require('./routes/user'));
 app.use('/book', require('./routes/book'));
