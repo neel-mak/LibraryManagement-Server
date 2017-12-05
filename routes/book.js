@@ -344,22 +344,6 @@ router.post('/delete', (req,res) =>{
     });
 
 
-                winston.info("Book not retured yet:"+book.numAvailableCopies+ " : "+book.numOfCopies);
-                res.json({success: false, message: "Books cannot be deleted while checkedout by a patron"});
-        } else {
-          Book.destroy({
-            where: {id:book.id}
-          }).then ((response)=> {
-            res.json({success: true, message: "Book deleted"})
-          })
-        }
-      }
-      });
-
-    });
-
-
-
 router.post('/lookupISBN',(req,res)=> {
   winston.info("came to isbn");
   if(!req.body.isbn) {
