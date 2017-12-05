@@ -147,10 +147,12 @@ router.post('/search', (req, res) => {
       });
       break;
 
+
     case "byMultipleKeywords":
       book.keywords = req.body.searchParameters.keywords;
       //Initialize the array to be returned
       var finalResults = [];
+
 
       //Function for Each keyword search
       var findBooksByKeyword = function(singleKeyword, doneCallback) {
@@ -182,6 +184,7 @@ router.post('/search', (req, res) => {
           return doneCallback(null, books);
         });
       }
+
 
       //Map over the provided array and perform database search for each and add to finalResults
       async.map(book.keywords, findBooksByKeyword, function(err, results) {
@@ -340,6 +343,22 @@ router.post('/delete', (req,res) =>{
     });
 
 
+                winston.info("Book not retured yet:"+book.numAvailableCopies+ " : "+book.numOfCopies);
+                res.json({success: false, message: "Books cannot be deleted while checkedout by a patron"});
+        } else {
+          Book.destroy({
+            where: {id:book.id}
+          }).then ((response)=> {
+            res.json({success: true, message: "Book deleted"})
+          })
+        }
+      }
+      });
+
+    });
+
+
+
 router.post('/lookupISBN',(req,res)=> {
   winston.info("came to isbn");
   if(!req.body.isbn) {
@@ -384,6 +403,7 @@ router.get('/all',(req,res) => {
     else res.json({success:false,message:"No books found"});
   })
 })
+
 
 router.post('/myBooks',(req,res) => {
   if(!req.body.email || !req.body.patronId) {
@@ -442,5 +462,7 @@ router.post('/myBooks',(req,res) => {
     }
   })
 });
+
+
 
 module.exports = router;
