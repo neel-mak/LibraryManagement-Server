@@ -441,11 +441,27 @@ router.post('/myBooks',(req,res) => {
             //winston.info("Book..",checkouts[0].book.title);
             return res.json({
                 success: true,
+                message:'Books found!',
                 data: responseArr
             });
           }
-        })
+          else{
+              return res.json({
+                success: true,
+                data: [],
+                message:"No books checkedout yet!"
+            });
+          }
+        });
+
       }
+    }
+    else{
+      return res.json({
+        success: true,
+        data: [],
+        message:"No books checkedout yet!"
+    });
     }
   })
 });
