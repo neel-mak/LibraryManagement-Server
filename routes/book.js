@@ -455,6 +455,13 @@ router.post('/myBooks',(req,res) => {
         });
 
       }
+      else{
+        return res.json({
+          success: true,
+          data: [],
+          message:"No books checkedout yet!"
+        });
+      }
     }
     else{
       return res.json({

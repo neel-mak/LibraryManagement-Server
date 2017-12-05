@@ -23,7 +23,7 @@ app = express();
 
 var bodyParser = require('body-parser');
 var morgan = require('morgan');
-var moment = require('moment');
+var moment = require('moment-timezone');
 
 var timeout = require('connect-timeout');
 
@@ -92,7 +92,7 @@ app.get('/status', function(req,res){
 
 app.get('/time', function(req,res){
     res.json({
-        "currentTime":moment().format("MMMM Do YYYY, h:mm a")
+        "currentTime":moment().tz('America/Los_Angeles').format("MMMM Do YYYY, h:mm a")
     })
 });
 
