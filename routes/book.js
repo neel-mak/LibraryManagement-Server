@@ -385,4 +385,62 @@ router.get('/all',(req,res) => {
   })
 })
 
+router.post('/myBooks',(req,res) => {
+  if(!req.body.email || !req.body.patronId) {
+    winston.info("userId/email not present");
+    return res.json({
+        success: false,
+        message: 'Please submit patronId/BookIds'
+    });
+  }
+
+  Checkout.findAll({
+    where:{
+      patronId:req.body.patronId,
+      isReturned: false
+    }
+  })
+  .then((checkouts)=>{
+    if(checkouts){
+      if(checkouts.length > 0){
+        checkouts = checkouts.map( (r) => ( r.toJSON() ) );
+        let bookIds = [];
+        checkouts.forEach(c => {
+          bookIds.push(c.bookId);
+        });
+
+        Book.findAll({
+          where:{
+            id:{
+              $in: bookIds
+            }
+          }
+        })
+        .then((books)=>{
+          winston.info("books..",books.length);
+          if(books){
+            let responseArr = _.map(checkouts,(c)=>{
+              let book = _.find(books,{id:c.bookId});
+              winston.info("Book..",book.title);
+              c.book = book;
+              return c;
+            });
+            winston.info("responseArr,,",responseArr)
+            /* checkouts.forEach((c) => {
+                let book = _.find(books,{id:c.bookId});
+                 winston.info("Book..",book.title);
+                c.book = book;
+            }); */
+            //winston.info("Book..",checkouts[0].book.title);
+            return res.json({
+                success: true,
+                message: responseArr
+            });
+          }
+        })
+      }
+    }
+  })
+});
+
 module.exports = router;

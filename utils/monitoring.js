@@ -127,7 +127,7 @@ let processHold = (holdInfo) =>{
     
     let endDate =moment(holdInfo.endDate).format("DD");
     //winston.info("Hold end date...",endDate);
-    winston.info("Hold end date moment...",moment(holdInfo.endDate));
+    //winston.info("Hold end date moment...",moment(holdInfo.endDate));
     if(endDate <= moment().format("DD")){
         winston.info("Hold expired...",holdInfo.id);
         holdInfo.set('isActive',false);
