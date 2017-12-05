@@ -97,7 +97,7 @@ let processCheckout = (checkoutInfo) =>{
         checkoutInfo.set('lastAlertSentOn',null);
         checkoutInfo.set('lastAlertSentOn',new Date());
         checkoutInfo.save();
-        //sendDueDateWarningMail(checkoutInfo);
+        sendDueDateWarningMail(checkoutInfo);
     
 }
 
