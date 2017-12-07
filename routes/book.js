@@ -123,7 +123,7 @@ router.post('/search', (req, res) => {
             return res.json({success: true, message: "book found", data: book});
           } else {
             winston.info("book not found");
-            return res.json({success: false, message: "book not found", data: null})
+            return res.json({success: true, message: "book not found", data: null})
           }
         });
         break;
@@ -143,7 +143,7 @@ router.post('/search', (req, res) => {
           return res.json({success: true, message: "book(s) found", data: books});
         } else {
           winston.info("book not found");
-          return res.json({success: false, message: "book not found", data: null})
+          return res.json({success: true, message: "book not found", data: null})
         }
       });
       break;
@@ -194,7 +194,7 @@ router.post('/search', (req, res) => {
         if (finalResults.length > 0) {
           return res.json({success: true, message: "Following books found", data: finalResults});
         } else {
-          return res.json({success: false, message: "No books found", data: finalResults});
+          return res.json({success: true, message: "No books found", data: finalResults});
         }
 
       });
@@ -212,7 +212,7 @@ router.post('/search', (req, res) => {
           return res.json({success: true, message: "book(s) found", data: books});
         } else {
           winston.info("book not found");
-          return res.json({success: false, message: "book not found", data: null})
+          return res.json({success: true, message: "book not found", data: null})
         }
       });
       break;
@@ -230,7 +230,7 @@ router.post('/search', (req, res) => {
           return res.json({success: true, message: "book(s) found", data: books});
         } else {
           winston.info("book not found");
-          return res.json({success: false, message: "book not found", data: null})
+          return res.json({success: true, message: "book not found", data: null})
         }
       });
       break;
