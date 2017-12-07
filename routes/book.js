@@ -267,6 +267,11 @@ router.post('/update', (req, res) => {
       updatedBook.createdBy = dbBook.createdBy;
       updatedBook.updatedBy = req.body.updatedBy;
       updatedBook.locationInLibrary = req.body.locationInLibrary || dbBook.locationInLibrary;
+      updatedBook.keywords = req.body.keywords || dbBook.keywords;
+      updatedBook.callNumber = req.body.callNumber || dbBook.callNumber;
+      updatedBook.publisher = req.body.publisher || dbBook.publisher;
+      updatedBook.yearOfPublication = req.body.yearOfPublication || dbBook.yearOfPublication;
+
 
       //Check for Updation in quantity
       if (req.body.numOfCopies != dbBook.numOfCopies) {
