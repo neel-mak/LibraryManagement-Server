@@ -13,7 +13,6 @@ const _ = require('lodash');
 const Checkout = models.Checkout;
 const ISBNParser = require('isbn').ISBN;
 const ISBNLookup = require('node-isbn');
-const moment = require('moment');
 
 router.post('/add', (req, res) => {
 
@@ -75,10 +74,11 @@ router.post('/search', (req, res) => {
     case "byTitle":
 
       book.title = req.body.searchParameters.title;
+      lowerCaseTitle = book.title.toLowerCase();
 
       Book.findAll({
         where: {
-          title: book.title
+          title: Sequelize.where(Sequelize.fn('LOWER', Sequelize.col('title')), 'LIKE', '%' + lowerCaseTitle + '%')
         }
       }).then((books) => {
         if (books && books.length > 0) {
@@ -123,7 +123,7 @@ router.post('/search', (req, res) => {
             return res.json({success: true, message: "book found", data: book});
           } else {
             winston.info("book not found");
-            return res.json({success: true, message: "book not found", data: null})
+            return res.json({success: false, message: "book not found", data: null})
           }
         });
         break;
@@ -143,17 +143,15 @@ router.post('/search', (req, res) => {
           return res.json({success: true, message: "book(s) found", data: books});
         } else {
           winston.info("book not found");
-          return res.json({success: true, message: "book not found", data: null})
+          return res.json({success: false, message: "book not found", data: null})
         }
       });
       break;
-
 
     case "byMultipleKeywords":
       book.keywords = req.body.searchParameters.keywords;
       //Initialize the array to be returned
       var finalResults = [];
-
 
       //Function for Each keyword search
       var findBooksByKeyword = function(singleKeyword, doneCallback) {
@@ -186,7 +184,6 @@ router.post('/search', (req, res) => {
         });
       }
 
-
       //Map over the provided array and perform database search for each and add to finalResults
       async.map(book.keywords, findBooksByKeyword, function(err, results) {
 
@@ -194,7 +191,7 @@ router.post('/search', (req, res) => {
         if (finalResults.length > 0) {
           return res.json({success: true, message: "Following books found", data: finalResults});
         } else {
-          return res.json({success: true, message: "No books found", data: finalResults});
+          return res.json({success: false, message: "No books found", data: finalResults});
         }
 
       });
@@ -212,7 +209,7 @@ router.post('/search', (req, res) => {
           return res.json({success: true, message: "book(s) found", data: books});
         } else {
           winston.info("book not found");
-          return res.json({success: true, message: "book not found", data: null})
+          return res.json({success: false, message: "book not found", data: null})
         }
       });
       break;
@@ -230,7 +227,7 @@ router.post('/search', (req, res) => {
           return res.json({success: true, message: "book(s) found", data: books});
         } else {
           winston.info("book not found");
-          return res.json({success: true, message: "book not found", data: null})
+          return res.json({success: false, message: "book not found", data: null})
         }
       });
       break;
@@ -388,91 +385,5 @@ router.get('/all',(req,res) => {
     else res.json({success:false,message:"No books found"});
   })
 })
-
-
-router.post('/myBooks',(req,res) => {
-  if(!req.body.email || !req.body.patronId) {
-    winston.info("userId/email not present");
-    return res.json({
-        success: false,
-        message: 'Please submit patronId/BookIds'
-    });
-  }
-
-  Checkout.findAll({
-    where:{
-      patronId:req.body.patronId,
-      isReturned: false
-    }
-  })
-  .then((checkouts)=>{
-    if(checkouts){
-      if(checkouts.length > 0){
-        checkouts = checkouts.map( (r) => ( r.toJSON() ) );
-        let bookIds = [];
-        checkouts.forEach(c => {
-          c.checkoutDate = moment(c.checkoutDate).format("MMMM Do YYYY");
-          c.dueDate = moment(c.dueDate).format("MMMM Do YYYY");
-          bookIds.push(c.bookId);
-        });
-
-        Book.findAll({
-          where:{
-            id:{
-              $in: bookIds
-            }
-          }
-        })
-        .then((books)=>{
-          winston.info("books..",books.length);
-          if(books){
-            let responseArr = _.map(checkouts,(c)=>{
-              let book = _.find(books,{id:c.bookId});
-              winston.info("Book..",book.title);
-              c.book = book;
-              return c;
-            });
-            winston.info("responseArr,,",responseArr)
-            /* checkouts.forEach((c) => {
-                let book = _.find(books,{id:c.bookId});
-                 winston.info("Book..",book.title);
-                c.book = book;
-            }); */
-            //winston.info("Book..",checkouts[0].book.title);
-            return res.json({
-                success: true,
-                message:'Books found!',
-                data: responseArr
-            });
-          }
-          else{
-              return res.json({
-                success: true,
-                data: [],
-                message:"No books checkedout yet!"
-            });
-          }
-        });
-
-      }
-      else{
-        return res.json({
-          success: true,
-          data: [],
-          message:"No books checkedout yet!"
-        });
-      }
-    }
-    else{
-      return res.json({
-        success: true,
-        data: [],
-        message:"No books checkedout yet!"
-    });
-    }
-  })
-});
-
-
 
 module.exports = router;
