@@ -11,7 +11,7 @@ const Book = models.Book;
 const Waitlist = models.Waitlist;
 const Checkout = models.Checkout;
 const winston = require('winston');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const crypto = require('crypto');
 const config = require('../config/config');
 const utils = require('../utils/util');
@@ -412,8 +412,8 @@ let sendCheckoutMail = (booksArr, transactionArray, user) =>{
     mailText.push("----------------------------------------");
     for(let i=0;i<booksArr.length;i++){
         mailText.push((i+1) +". "+ booksArr[i].title + " by "+booksArr[i].author+"\n");
-        mailText.push("Checkout time: "+moment(transactionArray[i].checkoutDate).format("MMMM Do YYYY, h:mm a"));
-        mailText.push("Due date: "+moment(transactionArray[i].dueDate).format("MMMM Do YYYY") +"\n");
+        mailText.push("Checkout time: "+moment(transactionArray[i].checkoutDate).tz("America/Los_Angeles").format("MMMM Do YYYY, h:mm a"));
+        mailText.push("Due date: "+moment(transactionArray[i].dueDate).tz("America/Los_Angeles").format("MMMM Do YYYY") +"\n");
         transactionArray[i].book = booksArr[i];
         //add more details as required
     }
