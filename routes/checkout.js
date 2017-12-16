@@ -9,6 +9,7 @@ const models = require('../models/index');
 const User = models.User;
 const Book = models.Book;
 const Waitlist = models.Waitlist;
+const Hold = models.Hold;
 const Checkout = models.Checkout;
 const winston = require('winston');
 const moment = require('moment-timezone');
@@ -62,7 +63,7 @@ router.post('/', (req, res) => {
             }
         
             winston.info("Now checking user's total checkouts...");
-            if(user.checkedoutBooks && user.checkedoutBooks.length == 9){
+            if(user.checkedoutBooks && user.checkedoutBooks!==null && user.checkedoutBooks.length == 9){
                 //first check: How many books user has checkedout till now? >9 return 
                 winston.info("Already checked out 9 books..",req.body.email);
                 return res.json({
@@ -110,95 +111,205 @@ router.post('/', (req, res) => {
                 })
                 .then((books) => {
                     let unavailableBook = null;
-                    if(books){
+                    if(books && books!==null){
+                        winston.info("Books retrieved",books.length);
                         for(let i=0;i<books.length;i++){
-                            if(books[i].numAvailableCopies == 0){
+                            if(books[i].numAvailableCopies === 0){
                                 //winston.info("Book unavailable",books[i]);
                                 unavailableBook = books[i];
                                 break;
                             }
                         }
-                        
-                        if(unavailableBook){
+                        winston.info("Unavailable book..",unavailableBook.title);
+                        if(unavailableBook && unavailableBook !== null){
                             winston.info("Book with title "+unavailableBook.title+" is unavailable!");
-                            return res.json({
-                                success: false,
-                                message: "Book with title "+unavailableBook.title+" is unavailable!"
-                            });
+                            winston.info("Now checking if there is hold for this book for this user");
+                            Hold.findOne({
+                                where:{
+                                    patronId:req.body.patronId,
+                                    bookId:unavailableBook.id,
+                                    isActive:true
+                                }
+                            })
+                            .then((hold)=>{
+                                if(!!!hold){
+                                    return res.json({
+                                        success: false,
+                                        message: "Book with title "+unavailableBook.title+" is unavailable!"
+                                    });
+                                }
+                                winston.info("hold exists for the patron on the book");
+                                let dueDate = moment().add(global.timeOffset,'minutes');
+                                dueDate = dueDate.add(30,'days').toDate();
+                                //dueDate.setDate(dueDate.getDate() + 30);
+                                let transactionArray = [];
+                                let childTransaction ={
+                                    bookId:unavailableBook.id,
+                                    patronId:req.body.patronId,
+                                    checkoutDate: moment().add(global.timeOffset,'minutes').toDate(),
+                                    dueDate: dueDate,//moment(new Date()).add(30,'days').format(""),
+                                    renewCount: 0,
+                                    currentFine: 0,
+                                    isReturned: false
+                                }
+                                transactionArray.push(childTransaction);
+                                Checkout.bulkCreate(transactionArray)
+                                .then(()=>{
+                                    winston.info("Checkout record created");
+                                    //add these books to user table's checkedOutBooks array;
+                                    
+                                    
+                                    winston.info("Found user details..",user.id);
+                                    winston.info("user.checkedoutBooks",user.checkedoutBooks);
+                                    if(user.checkedoutBooks === null)
+                                        user.checkedoutBooks = [];
+                                    let usersCheckedOutBooks = user.checkedoutBooks;
+                                    usersCheckedOutBooks.push.apply(usersCheckedOutBooks,req.body.bookIds);
+                                    user.checkedoutBooks = null;
+                                    user.set("checkedOutBooks",usersCheckedOutBooks);
+                                    winston.info("checkedOutBooks",usersCheckedOutBooks);
+                                    //user.checkedoutBooks.push.apply(user.checkedoutBooks,req.body.bookIds);
+                                    User.update({
+                                        checkedoutBooks : usersCheckedOutBooks
+                                    },{where:{
+                                        id: user.id
+                                    }})
+                                    .then((u)=>{
+                                        winston.info("user updated",u[0]);
+                                        if(u && u[0] == 1){
+                                            //user updated
+                                            winston.info("Now updating hold as inactive");
+                                            hold.set("isActive",false);
+                                            hold.save()
+                                            .then((h)=>{
+                                                if(h && h!==null){
+                                                    winston.info("hold updated...",h.get({plain:true}));
+                                                    let books =[];
+                                                    books.push(unavailableBook);
+                                                    let checkoutInfo = sendCheckoutMail(books,transactionArray,user);
+                                                    checkoutInfo.forEach(c => {
+                                                        c.checkoutDate = moment(c.checkoutDate).format("MMMM Do YYYY");
+                                                        c.dueDate = moment(c.dueDate).format("MMMM Do YYYY");
+                                                    });
+                                                    return res.json({
+                                                        success: true,
+                                                        message: "Successful transaction", //TODO: change the message. send the mail
+                                                        data: checkoutInfo
+                                                    });
+                                                }
+                                                winston.info("error",e);
+                                                return res.json({
+                                                    success: false,
+                                                    message: "Somehing went wrong. Please try again later."
+                                                });
+                                                
+                                               
+                                            })
+                                            .catch((e)=>{
+                                                winston.info("error",e);
+                                                return res.json({
+                                                    success: false,
+                                                    message: "Somehing went wrong. Please try again later."
+                                                });
+                                            })
+                                        }
+                                    })
+                                    .catch((e)=>{
+                                        winston.info("error",e);
+                                        return res.json({
+                                            success: false,
+                                            message: "Somehing went wrong. Please try again later."
+                                        });
+                                    })
+
+                                    //send mail with transcation details.
+                                     return;
+                                   
+                                });
+                            })
+                            .catch((e)=>{
+                                return res.json({
+                                    success: false,
+                                    message: "Somehing went wrong. Please try again later."
+                                });
+                            })
                         }
                         //decrement the numAvailableCopies for each book
-                        Book.update(
-                            { numAvailableCopies: models.sequelize.literal('num_available_copies -1') },
-                            { where: { 
-                                id: {
-                                    $in: req.body.bookIds
-                                }
-                                } 
-                            }
-                        )
-                            .then((result) =>{
-                            // handleResult(result)
-                                winston.info("no of records updated:",result[0]);
-                                //make entry into checkout table
-                                Book.findAll({
-                                    where:{
-                                        id:{
-                                            $in: req.body.bookIds
-                                        }
+                        else{
+                            Book.update(
+                                { numAvailableCopies: models.sequelize.literal('num_available_copies -1') },
+                                { where: { 
+                                    id: {
+                                        $in: req.body.bookIds
                                     }
-                                })
-                                .then((books)=>{
-                                    let transactionArray = [];
-                                    books.forEach(book => {
-                                        let dueDate = moment().add(global.timeOffset,'minutes');
-                                        dueDate = dueDate.add(30,'days').toDate();
-                                        //dueDate.setDate(dueDate.getDate() + 30);
-                                        let childTransaction ={
-                                            bookId:book.id,
-                                            patronId:req.body.patronId,
-                                            checkoutDate: moment().add(global.timeOffset,'minutes').toDate(),
-                                            dueDate: dueDate,//moment(new Date()).add(30,'days').format(""),
-                                            renewCount: 0,
-                                            currentFine: 0,
-                                            isReturned: false
-                                        }
-                                        transactionArray.push(childTransaction);
-                                    });
-                                    Checkout.bulkCreate(transactionArray)
-                                    .then(()=>{
-                                        //add these books to user table's checkedOutBooks array;
-                                        User.findOne({
-                                            where:{
-                                                email: req.body.email
+                                    } 
+                                }
+                            )
+                                .then((result) =>{
+                                // handleResult(result)
+                                    winston.info("no of records updated:",result[0]);
+                                    //make entry into checkout table
+                                    Book.findAll({
+                                        where:{
+                                            id:{
+                                                $in: req.body.bookIds
                                             }
-                                        })
-                                        .then(user=>{
-                                            winston.info(user.checkedoutBooks);
-                                            if(!!!user.checkedoutBooks)
-                                                user.checkedoutBooks = [];
-                                            user.checkedoutBooks.push.apply(user.checkedoutBooks,req.body.bookIds);
-                                            user.save();
-
-                                            //send mail with transcation details.
-                                            let checkoutInfo = sendCheckoutMail(books,transactionArray,user);
-                                            checkoutInfo.forEach(c => {
-                                                c.checkoutDate = moment(c.checkoutDate).format("MMMM Do YYYY");
-                                                c.dueDate = moment(c.dueDate).format("MMMM Do YYYY");
-                                            });
-                                            return res.json({
-                                                success: true,
-                                                message: "Successful transaction", //TODO: change the message. send the mail
-                                                data: checkoutInfo
-                                            });
+                                        }
+                                    })
+                                    .then((books)=>{
+                                        let transactionArray = [];
+                                        books.forEach(book => {
+                                            let dueDate = moment().add(global.timeOffset,'minutes');
+                                            dueDate = dueDate.add(30,'days').toDate();
+                                            //dueDate.setDate(dueDate.getDate() + 30);
+                                            let childTransaction ={
+                                                bookId:book.id,
+                                                patronId:req.body.patronId,
+                                                checkoutDate: moment().add(global.timeOffset,'minutes').toDate(),
+                                                dueDate: dueDate,//moment(new Date()).add(30,'days').format(""),
+                                                renewCount: 0,
+                                                currentFine: 0,
+                                                isReturned: false
+                                            }
+                                            transactionArray.push(childTransaction);
+                                        });
+                                        Checkout.bulkCreate(transactionArray)
+                                        .then(()=>{
+                                            //add these books to user table's checkedOutBooks array;
+                                            User.findOne({
+                                                where:{
+                                                    email: req.body.email
+                                                }
+                                            })
+                                            .then(user=>{
+                                                winston.info(user.checkedoutBooks);
+                                                if(!!!user.checkedoutBooks)
+                                                    user.checkedoutBooks = [];
+                                                user.checkedoutBooks.push.apply(user.checkedoutBooks,req.body.bookIds);
+                                                user.save();
+    
+                                                //send mail with transcation details.
+                                                let checkoutInfo = sendCheckoutMail(books,transactionArray,user);
+                                                checkoutInfo.forEach(c => {
+                                                    c.checkoutDate = moment(c.checkoutDate).format("MMMM Do YYYY");
+                                                    c.dueDate = moment(c.dueDate).format("MMMM Do YYYY");
+                                                });
+                                                return res.json({
+                                                    success: true,
+                                                    message: "Successful transaction", //TODO: change the message. send the mail
+                                                    data: checkoutInfo
+                                                });
+                                            })
                                         })
                                     })
+    
                                 })
-
-                            })
-                            
-                            .catch(err =>
-                                winston.info(err)
-                            )
+                                
+                                .catch(err =>
+                                    winston.info(err)
+                                )
+                        }
+                        
 
                     }
                 })
