@@ -150,12 +150,13 @@ router.post('/', (req, res) => {
                                 .then((books)=>{
                                     let transactionArray = [];
                                     books.forEach(book => {
-                                        let dueDate = new Date();
-                                        dueDate.setDate(dueDate.getDate() + 30);
+                                        let dueDate = moment().add(global.timeOffset,'minutes');
+                                        dueDate = dueDate.add(30,'days').toDate();
+                                        //dueDate.setDate(dueDate.getDate() + 30);
                                         let childTransaction ={
                                             bookId:book.id,
                                             patronId:req.body.patronId,
-                                            checkoutDate: new Date(),
+                                            checkoutDate: moment().add(global.timeOffset,'minutes').toDate(),
                                             dueDate: dueDate,//moment(new Date()).add(30,'days').format(""),
                                             renewCount: 0,
                                             currentFine: 0,
