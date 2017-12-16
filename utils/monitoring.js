@@ -2,10 +2,10 @@ const cronJob = require('cron').CronJob;
 const winston  = require('winston');
 const Sequelize = require('sequelize');
 const models = require('../models/index');
-const moment = require('moment');
+const moment = require('moment-timezone');
 const config = require('../config/config');
 const utils = require('../utils/util');
-const eventReceivers = require('../utils/eventReceivers');
+const eventReceivers = require('../utils/event-receivers');
 const mailer = require('../utils/email');
 const Op = Sequelize.Op;
 const _ = require('underscore');
@@ -20,14 +20,14 @@ const Checkout = models.Checkout;
 //A job to check due date...
 const dueDateMonitor = new cronJob("* * * * *", function() {
         //cron expression: min hour * * *
-        console.log("Due dates monitoring job start: " + new Date());
+        console.log("Due dates monitoring job start: " + moment().add(global.timeOffset,"minutes").toDate());
         checkDueDate();
     }, null, false);
 //A job to check holds
 
 const holdMonitor = new cronJob("* * * * *", function() {
     //cron expression: min hour * * *
-    console.log("Holds monitoring job start: " + new Date());
+    console.log("Holds monitoring job start: " + moment().add(global.timeOffset,"minutes").toDate());
     checkHolds();
 }, null, false);
 
@@ -47,8 +47,8 @@ let checkDueDate = () => {
         where:{
            isReturned: false,
            dueDate: {
-               $lte: moment(dueDateRange).format(),
-               $gt: moment().format()
+               $lte: moment(dueDateRange).add('minutes',global.timeOffset).toDate(),
+               $gt: moment().add('minutes',global.timeOffset).toDate()
            }
             //due date which is less than currentDate + 5
         }
@@ -75,13 +75,13 @@ let processCheckout = (checkoutInfo) =>{
     }
     
         winston.info("Alerts have been sent for this checkout..");
-        let d = new Date();
-        d.setDate(checkoutInfo.lastAlertSentOn);
+        /* let d = new Date();
+        d.setDate(checkoutInfo.lastAlertSentOn); */
         
-        winston.info("Alert sent on..",moment(checkoutInfo.lastAlertSentOn).format("DD"));
-        let lastAlertSentOn = moment(checkoutInfo.lastAlertSentOn).format("DD");
+        winston.info("Alert sent on..",moment(checkoutInfo.lastAlertSentOn).format("DDMM"));
+        let lastAlertSentOn = moment(checkoutInfo.lastAlertSentOn);
         //checkoutInfo.lastAlertSentOn
-        if(checkoutInfo.lastAlertSentOn!== null && lastAlertSentOn === moment().format("DD")){
+        if(checkoutInfo.lastAlertSentOn!== null && lastAlertSentOn.diff(moment().add('minutes',global.timeOffset),'hours' > 0)){
             winston.info("Alert for today aleady sent..",lastAlertSentOn);
             return;
         }
@@ -95,7 +95,7 @@ let processCheckout = (checkoutInfo) =>{
         checkoutInfo.alertCount++;
         checkoutInfo.set('alertCount',checkoutInfo.alertCount);
         checkoutInfo.set('lastAlertSentOn',null);
-        checkoutInfo.set('lastAlertSentOn',new Date());
+        checkoutInfo.set('lastAlertSentOn',moment(new Date()).format());
         checkoutInfo.save();
         sendDueDateWarningMail(checkoutInfo);
     
@@ -153,7 +153,8 @@ let processHold = (holdInfo) =>{
 let sendDueDateWarningMail = (checkoutInfo) => {
     let mailOptions = {};
     mailOptions.subject = "Book due notice";
-    let mailText = ["Hi,","\nBelow book is due in "+(5-checkoutInfo.alertCount+1) +" day(s):\n"];
+    let remainingDays = moment(checkoutInfo.dueDate).diff(moment().add('minutes',global.timeOffset),'days');
+    let mailText = ["Hi,","\nBelow book is due in "+remainingDays +" day(s):\n"];
     mailText.push("----------------------------------------");
     Book.findOne({
         where:{

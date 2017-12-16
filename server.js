@@ -90,16 +90,13 @@ app.get('/status', function(req,res){
 	res.send('OK');
 })
 
-app.get('/time', function(req,res){
-    res.json({
-        "currentTime":moment().tz('America/Los_Angeles').format("MMMM Do YYYY, h:mm a")
-    })
-});
+
 
 app.use('/user', require('./routes/user'));
 app.use('/book', require('./routes/book'));
 app.use('/checkout', require('./routes/checkout'));
 app.use('/return', require('./routes/return'));
+app.use('/time', require('./routes/test-assistance'));
 
 
 app.use(function (err, req, res, next) {
@@ -112,6 +109,10 @@ const server  = app.listen(port);
 server.timeout = 1200000;
 winston.info('info','Your server is running in ' + app.get('env') + ' on port ' + port + '.');
 
+
+//Global timeOffset initialized to 0
+
+global.timeOffset = 0;
 
 //Sync Job running every hour
 // const updateRecallsJob = new cronJob("* * * * *", function() {

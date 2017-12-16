@@ -20,7 +20,7 @@ const utils = require('../utils/util');
 const mailer = require('../utils/email');
 const events = require('events');
 const eventEmitter = new events.EventEmitter();
-const eventReceivers = require('../utils/eventReceivers');
+const eventReceivers = require('../utils/event-receivers');
 const Op = Sequelize.Op;
 
 
