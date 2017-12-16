@@ -248,7 +248,7 @@ router.post('/addToWaitlist',(req, res) => {
                     patronList: [
                         {
                             patronId: req.body.patronId,
-                            waitlistDate: new Date(),
+                            waitlistDate: moment().add(global.timeOffset,'minutes').toDate(),//new Date(),
                             waiting: true
                         }
                     ]
@@ -302,7 +302,7 @@ router.post('/addToWaitlist',(req, res) => {
                 patronListArr.push(
                     {
                         patronId: req.body.patronId,
-                        waitlistDate: new Date(),
+                        waitlistDate: moment().add(global.timeOffset,'minutes').toDate(),//new Date(),
                         waiting: true
                     }
                 );
