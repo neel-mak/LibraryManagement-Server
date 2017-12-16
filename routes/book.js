@@ -15,6 +15,7 @@ const ISBNParser = require('isbn').ISBN;
 const ISBNLookup = require('node-isbn');
 const moment = require('moment-timezone');
 const Hold = models.Hold;
+const User = models.User;
 router.post('/add', (req, res) => {
 
   winston.info("Came to add book route");
@@ -556,6 +557,75 @@ router.post('/holds',(req,res) => {
     });
     }
   })
+});
+
+router.post('/waitlist',(req,res)=>{
+  winston.info("waitlist requested...");
+  if(!req.body.email || !req.body.patronId) {
+    winston.info("userId/email not present");
+    return res.json({
+        success: false,
+        message: 'Please submit patronId/BookIds'
+    });
+  }
+  winston.info("finding user...");
+  User.findOne({
+    where:{
+      id:req.body.patronId
+    }
+  })
+  .then((user)=>{
+    winston.info("finding user...");
+    if(user){
+      winston.info("finding user...",user.get({plain:true}));
+      if(user.waitListBookIds && user.waitListBookIds.length  > 0){
+        winston.info("user's waitlisted bookids...",user.waitListBookIds);
+        Book.findAll({
+          where:{
+            id:{
+              $in: user.waitListBookIds
+            }
+          }
+        })
+        .then((books)=>{
+          winston.info("books..",books.length);
+          if(books){
+            return res.json({
+                success: true,
+                message:'Waitlisted books found!',
+                data: books
+            });
+          }
+          else{
+              return res.json({
+                success: true,
+                data: [],
+                message:"No waitlisted book found!"
+            });
+          }
+        });
+
+      }
+      else{
+        return res.json({
+          success: true,
+          data: [],
+          message:"No waitlisted book found!"
+        });
+      }
+    }
+    else{
+      return res.json({
+        success: true,
+        data: [],
+        message:"No waitlisted book found!"
+    });
+    }
+  })
+  .catch((e)=>{
+    winston.info("Error caught",e);
+  });
+
 });
 
 module.exports = router;

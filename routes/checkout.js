@@ -255,11 +255,21 @@ router.post('/addToWaitlist',(req, res) => {
                 Waitlist.create(waitlistObj).
                 then((waitlist)=>{
                     if(waitlist){
-                        winston.info("waitlist entry created...");
-                        return res.json({
-                            success: true,
-                            message: 'You have been added to the waitlist!'
+                        if(!!!user.waitListBookIds || user.waitListBookIds === null){
+                            user.waitListBookIds = [];
+                        }
+                        user.waitListBookIds.push(req.body.bookId);
+                        user.save()
+                        .then((u)=>{
+                            if(u){
+                                winston.info("waitlist entry created...");
+                                return res.json({
+                                    success: true,
+                                    message: 'You have been added to the waitlist!'
+                                });
+                            }
                         });
+                        
                     }
                     else{
                         winston.info("something went wrong");
@@ -302,6 +312,16 @@ router.post('/addToWaitlist',(req, res) => {
                 then((w)=>{
                     if(w){
                         winston.info("waitlist entry created...",w.get({plain:true}));
+                        if(!!!user.waitListBookIds || user.waitListBookIds === null){
+                            user.waitListBookIds = [];
+                        }
+                        user.waitListBookIds.push(req.body.bookId);
+                        user.save()
+                        .then((u)=>{
+                            if(u){
+                                winston.info("waitlist entry created in user...");
+                            }
+                        });
                     }
                 });
                 winston.info("waitlist entry created...");
