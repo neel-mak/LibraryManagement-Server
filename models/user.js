@@ -13,7 +13,8 @@ module.exports = function(sequelize, DataTypes) {
         userType: {type: Sequelize.STRING, field: 'user_type'},
         verificationCode:{type: Sequelize.STRING, field: 'verification_code'},
         isVerified: {type: Sequelize.BOOLEAN, field: 'is_verified'},
-        checkedoutBooks:{type: Sequelize.ARRAY(Sequelize.STRING), field:'checkedout_books'}
+        checkedoutBooks:{type: Sequelize.ARRAY(Sequelize.STRING), field:'checkedout_books'},
+        waitListBookIds:{type: Sequelize.ARRAY(Sequelize.INTEGER), field:'wait_list_bookids'}
     },{
         tableName: 'users',
         timestamps: true, 
