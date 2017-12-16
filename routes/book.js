@@ -14,7 +14,7 @@ const Checkout = models.Checkout;
 const ISBNParser = require('isbn').ISBN;
 const ISBNLookup = require('node-isbn');
 const moment = require('moment-timezone');
-
+const Hold = models.Hold;
 router.post('/add', (req, res) => {
 
   winston.info("Came to add book route");
@@ -470,6 +470,89 @@ router.post('/myBooks',(req,res) => {
         success: true,
         data: [],
         message:"No books checkedout yet!"
+    });
+    }
+  })
+});
+
+router.post('/holds',(req,res) => {
+  if(!req.body.email || !req.body.patronId) {
+    winston.info("userId/email not present");
+    return res.json({
+        success: false,
+        message: 'Please submit patronId/BookIds'
+    });
+  }
+
+  Hold.findAll({
+    where:{
+      patronId:req.body.patronId,
+      isActive: true
+    }
+  })
+  .then((holds)=>{
+    if(holds){
+      if(holds.length > 0){
+        holds = holds.map( (r) => ( r.toJSON() ) );
+        let bookIds = [];
+        holds.forEach(c => {
+          c.startDate = moment(c.startDate).format("MMMM Do YYYY");
+          c.endDate = moment(c.endDate).format("MMMM Do YYYY");
+          bookIds.push(c.bookId);
+        });
+
+        Book.findAll({
+          where:{
+            id:{
+              $in: bookIds
+            }
+          }
+        })
+        .then((books)=>{
+          winston.info("books..",books.length);
+          if(books){
+            let responseArr = _.map(holds,(c)=>{
+              let book = _.find(books,{id:c.bookId});
+              winston.info("Book..",book.title);
+              c.book = book;
+              return c;
+            });
+            winston.info("responseArr,,",responseArr)
+            /* checkouts.forEach((c) => {
+                let book = _.find(books,{id:c.bookId});
+                 winston.info("Book..",book.title);
+                c.book = book;
+            }); */
+            //winston.info("Book..",checkouts[0].book.title);
+            return res.json({
+                success: true,
+                message:'Holds found!',
+                data: responseArr
+            });
+          }
+          else{
+              return res.json({
+                success: true,
+                data: [],
+                message:"No books on hold for you!"
+            });
+          }
+        });
+
+      }
+      else{
+        return res.json({
+          success: true,
+          data: [],
+          message:"No books on hold for you!"
+        });
+      }
+    }
+    else{
+      return res.json({
+        success: true,
+        data: [],
+        message:"No books on hold for you!"
     });
     }
   })
