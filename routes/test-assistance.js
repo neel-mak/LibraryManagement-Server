@@ -29,5 +29,13 @@ router.get('/', (req, res) => {
     })
 });
 
+//for development only
+router.get('/reset', (req, res) => {
+    winston.info("Global..",global.timeOffset);
+    global.timeOffset = 0;
+    res.json({
+        "currentTime":moment().tz('America/Los_Angeles').add('minutes',global.timeOffset).format("MMMM Do YYYY, h:mm a")
+    })
+});
 
 module.exports = router;
