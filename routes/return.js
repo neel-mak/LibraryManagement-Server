@@ -155,7 +155,7 @@ let sendBookReturnMail = (checkouts,books,user) =>{
 }
 
 let calculateFine = (checkoutInfo) => {
-    let today = new Date();
+    let today = moment().add(global.timeOffset,"minutes").toDate();
     let dueDate = checkoutInfo.dueDate;
     let hours = (today - dueDate) / 36e5;
     winston.info("Hours late",hours);

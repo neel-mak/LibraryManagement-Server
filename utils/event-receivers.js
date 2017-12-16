@@ -34,13 +34,15 @@ let onBookAvailable = (book)=>{
             w.set('patronList',null);
             if(patronList && patronList.length > 0){
                 let firstInQueue = patronList[0];
-                let endDate = new Date();
-                endDate.setDate(endDate.getDate() + 3);
+                /* let endDate = new Date();
+                endDate.setDate(endDate.getDate() + 3); */
+                let endDate = moment().add(global.timeOffset,'minutes');
+                endDate = endDate.add(30,'days').toDate();
                 winston.info("Creating hold for patron..",firstInQueue);
                 Hold.create({
                     bookId:book.id,
                     patronId:firstInQueue.patronId,
-                    startDate: new Date(),
+                    startDate: moment().add(global.timeOffset,'minutes').toDate(),//new Date(),
                     endDate:endDate,
                     isActive:true
                 }).

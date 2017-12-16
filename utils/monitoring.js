@@ -95,7 +95,7 @@ let processCheckout = (checkoutInfo) =>{
         checkoutInfo.alertCount++;
         checkoutInfo.set('alertCount',checkoutInfo.alertCount);
         checkoutInfo.set('lastAlertSentOn',null);
-        checkoutInfo.set('lastAlertSentOn',moment(new Date()).format());
+        checkoutInfo.set('lastAlertSentOn',moment().add(global.timeOffset,'minutes').toDate());
         checkoutInfo.save();
         sendDueDateWarningMail(checkoutInfo);
     
@@ -125,10 +125,10 @@ let checkHolds = () => {
 let processHold = (holdInfo) =>{
     winston.info("Process hold event received",holdInfo.get({plain:true}));
     
-    let endDate =moment(holdInfo.endDate).format("DD");
+    let endDate =moment(holdInfo.endDate).format("DDMM");
     //winston.info("Hold end date...",endDate);
     //winston.info("Hold end date moment...",moment(holdInfo.endDate));
-    if(endDate <= moment().format("DD")){
+    if(endDate <= moment().add(global.timeOffset,'minutes').format("DDMM")){
         winston.info("Hold expired...",holdInfo.id);
         holdInfo.set('isActive',false);
         holdInfo.save()
