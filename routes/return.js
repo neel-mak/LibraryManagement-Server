@@ -135,9 +135,9 @@ let sendBookReturnMail = (checkouts,books,user) =>{
     mailText.push("----------------------------------------");
     for(let i=0;i<checkouts.length;i++){
         mailText.push((i+1) +". "+ checkouts[i].book.title + " by "+checkouts[i].book.author);
-        mailText.push("Checkout time: "+moment(checkouts[i].checkoutDate).format("MMMM Do YYYY, h:mm a"));
-        mailText.push("Due date: "+moment(checkouts[i].dueDate).format("MMMM Do YYYY"));
-        mailText.push("Return date: "+moment().format("MMMM Do YYYY, h:mm a"));
+        mailText.push("Checkout time: "+moment(checkouts[i].checkoutDate).tz('America/Los_Angeles').format("MMMM Do YYYY, h:mm a"));
+        mailText.push("Due date: "+moment(checkouts[i].dueDate).tz('America/Los_Angeles').format("MMMM Do YYYY"));
+        mailText.push("Return date: "+moment().add(global.timeOffset,"minutes").tz('America/Los_Angeles').format("MMMM Do YYYY, h:mm a"));
         mailText.push("Total fine: $"+checkouts[i].currentFine+"\n\n\n");
         
         //add more details as required
@@ -178,7 +178,7 @@ let sendBookAvailableMail = (book,user,hold) =>{
     mailText.push("----------------------------------------");
     
     mailText.push((1) +". "+ book.title + " by "+book.author);
-    mailText.push("Hold expires on: "+moment(hold.endDate).format("MMMM Do YYYY"));
+    mailText.push("Hold expires on: "+moment(hold.endDate).tz('America/Los_Angeles').format("MMMM Do YYYY"));
     
         
         //add more details as required
