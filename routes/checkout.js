@@ -120,7 +120,7 @@ router.post('/', (req, res) => {
                                 break;
                             }
                         }
-                        winston.info("Unavailable book..",unavailableBook.title);
+                        //winston.info("Unavailable book...",unavailableBook.title);
                         if(unavailableBook && unavailableBook !== null){
                             winston.info("Book with title "+unavailableBook.title+" is unavailable!");
                             winston.info("Now checking if there is hold for this book for this user");
