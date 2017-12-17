@@ -37,7 +37,7 @@ let onBookAvailable = (book)=>{
                 /* let endDate = new Date();
                 endDate.setDate(endDate.getDate() + 3); */
                 let endDate = moment().add(global.timeOffset,'minutes');
-                endDate = endDate.add(30,'days').toDate();
+                endDate = endDate.add(3,'days').toDate();
                 winston.info("Creating hold for patron..",firstInQueue);
                 Hold.create({
                     bookId:book.id,
