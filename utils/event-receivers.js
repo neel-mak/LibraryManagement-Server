@@ -78,6 +78,17 @@ let onBookAvailable = (book)=>{
                                         }
                                     })
                                     .then((user)=>{
+                                        //remove book from waitlist for this user
+                                        if(user && user!==null){
+                                            let waitlistedBooks = user.get("waitListBookIds");
+                                            waitlistedBooks.splice( waitlistedBooks.indexOf(book.id), 1 );
+                                            user.set("waitListBookIds",null);
+                                            user.set("waitListBookIds",waitlistedBooks);
+                                            user.save().then((u)=>{
+                                                winston.info("user waitlist updated..");
+                                            });
+                                        }
+                                        
                                         // mail user about the book availability;
                                         utils.sendBookAvailableMail(book,user,hold);
                                     });
