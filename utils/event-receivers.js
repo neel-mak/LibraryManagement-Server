@@ -102,12 +102,12 @@ let onBookAvailable = (book)=>{
             }
             else{
                 winston.info("No patrons on waitlist for ..",book.title);
-                updateBookQuantity();
+                updateBookQuantity(book);
             }
         }
         else{
             //no waitlist hence increase the book count
-            updateBookQuantity();
+            updateBookQuantity(book);
         }
     })
 }
