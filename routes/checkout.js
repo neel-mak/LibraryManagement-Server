@@ -367,10 +367,14 @@ router.post('/addToWaitlist',(req, res) => {
                 Waitlist.create(waitlistObj).
                 then((waitlist)=>{
                     if(waitlist){
-                        if(!!!user.waitListBookIds || user.waitListBookIds === null){
-                            user.waitListBookIds = [];
+                        let waitListBookIds = user.get("waitListBookIds");
+                        if(!!!waitListBookIds || waitListBookIds === null){
+                            waitListBookIds = [];
                         }
-                        user.waitListBookIds.push(req.body.bookId);
+                        waitListBookIds.push(req.body.bookId);
+                        winston.info("waitlistbook ids..",waitListBookIds);
+                        user.set("waitListBookIds",null);
+                        user.set("waitListBookIds",waitListBookIds);
                         user.save()
                         .then((u)=>{
                             if(u){
@@ -424,10 +428,15 @@ router.post('/addToWaitlist',(req, res) => {
                 then((w)=>{
                     if(w){
                         winston.info("waitlist entry created...",w.get({plain:true}));
-                        if(!!!user.waitListBookIds || user.waitListBookIds === null){
-                            user.waitListBookIds = [];
+                        let waitListBookIds = user.get("waitListBookIds");
+                        if(!!!waitListBookIds || waitListBookIds === null){
+                            waitListBookIds = [];
                         }
-                        user.waitListBookIds.push(req.body.bookId);
+                        waitListBookIds.push(req.body.bookId);
+                        winston.info("waitlistbook ids..",waitListBookIds);
+                        user.set("waitListBookIds",null);
+                        user.set("waitListBookIds",waitListBookIds);
+                        
                         user.save()
                         .then((u)=>{
                             if(u){
