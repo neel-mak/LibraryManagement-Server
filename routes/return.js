@@ -84,8 +84,21 @@ router.post('/', (req, res) => {
                             c.currentFine = calculateFine(c); //4. calculate and update fine
                             c.save();
                         });
-                        //future: check waitlist. If user present, insert hold. decrement the count.
-
+                       //TODO: remove books from user.checkedoutBooks
+                       let checkedoutBooks = user.get("checkedoutBooks");
+                       
+                       req.body.bookIds.forEach(bookId => {
+                           checkedoutBooks.splice( checkedoutBooks.indexOf(bookId), 1 );
+                       });
+                       
+                       winston.info("Updated checkedoutbooks array...",checkedoutBooks);
+                       user.set("checkedoutBooks",null);
+                       user.set("checkedoutBooks",checkedoutBooks);
+                       user.save().then((u)=>{
+                           if(u && u!==null){
+                               winston.info("User updated...",u.get({plain:true}));
+                           }
+                       })
                         //5. send mail
                         Book.findAll({
                             where:{
