@@ -102,26 +102,32 @@ let onBookAvailable = (book)=>{
             }
             else{
                 winston.info("No patrons on waitlist for ..",book.title);
+                updateBookQuantity();
             }
         }
         else{
             //no waitlist hence increase the book count
-            Book.update(
-                { // increment available count
-                    numAvailableCopies: models.sequelize.literal('num_available_copies +1') 
-                },
-                {
-                    where: {
-                        id:book.id
-                }
-            })
-            .then((b)=>{
-                if(b && b!==null){
-                    winston.info("Book updated...",b[0]);
-                }
-            });
+            updateBookQuantity();
         }
     })
 }
+
+let updateBookQuantity = (book)=>{
+    Book.update(
+        { // increment available count
+            numAvailableCopies: models.sequelize.literal('num_available_copies +1') 
+        },
+        {
+            where: {
+                id:book.id
+        }
+    })
+    .then((b)=>{
+        if(b && b!==null){
+            winston.info("Book updated...",b[0]);
+        }
+    });
+}
+
 
 exports.onBookAvailable = onBookAvailable;
