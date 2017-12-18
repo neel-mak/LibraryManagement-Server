@@ -125,10 +125,10 @@ let checkHolds = () => {
 let processHold = (holdInfo) =>{
     winston.info("Process hold event received",holdInfo.get({plain:true}));
     
-    let endDate =moment(holdInfo.endDate).format("DDMM");
+    let endDate =moment(holdInfo.endDate).toDate();
     //winston.info("Hold end date...",endDate);
     //winston.info("Hold end date moment...",moment(holdInfo.endDate));
-    if(endDate <= moment().add(global.timeOffset,'minutes').format("DDMM")){
+    if(endDate <= moment().add(global.timeOffset,'minutes').toDate()){
         winston.info("Hold expired...",holdInfo.id);
         holdInfo.set('isActive',false);
         holdInfo.save()
